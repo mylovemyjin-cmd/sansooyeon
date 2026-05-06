@@ -6,9 +6,10 @@
 <title>🎊 팔순 산수연 체크리스트</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-<!-- Firebase compat (전역 window.firebase 방식 — 모듈 없이 동작) -->
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -143,9 +144,65 @@ body.edit .add-sec-btn { display: block; }
 #toast { display: none; position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); background: rgba(35,35,35,0.92); color: #fff; padding: 10px 20px; border-radius: 22px; font-size: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.25); z-index: 300; white-space: nowrap; }
 #toast.show { display: block; animation: fu .2s ease; }
 @keyframes fu { from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)} }
+/* Login screen */
+#login-screen {
+  position: fixed; inset: 0; z-index: 500;
+  background: linear-gradient(135deg, #8B1A1A 0%, #C8860A 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px 24px;
+}
+.login-box {
+  background: rgba(255,255,255,0.97); border-radius: 24px;
+  padding: 36px 28px; width: 100%; max-width: 340px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.3); text-align: center;
+}
+.login-emoji { font-size: 48px; margin-bottom: 12px; }
+.login-title { font-size: 20px; font-weight: 700; color: #8B1A1A; margin-bottom: 4px; }
+.login-sub { font-size: 13px; color: #aaa; margin-bottom: 28px; }
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 13px 20px; border-radius: 12px;
+  border: 2px solid #e0e0e0; background: #fff; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: #333; font-family: inherit;
+  transition: all .2s; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.google-btn:hover { border-color: #C8860A; box-shadow: 0 4px 16px rgba(200,134,10,0.2); }
+.google-btn img { width: 20px; height: 20px; }
+.login-note { font-size: 11px; color: #ccc; margin-top: 16px; }
+/* User bar */
+#user-bar {
+  display: none; background: rgba(255,255,255,0.12);
+  padding: 6px 14px; border-radius: 20px; margin-top: 10px;
+  align-items: center; gap: 8px;
+}
+#user-bar.show { display: flex; }
+.user-avatar { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); }
+.user-name { color: #fff; font-size: 12px; font-weight: 600; }
+.logout-btn {
+  background: rgba(255,255,255,0.2); border: none; color: #fff;
+  font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer;
+  font-family: inherit;
+}
+/* Activity log */
+.item-log { font-size: 10px; color: #bbb; margin-top: 2px; display: block; }
+.item-log.has { color: #C8860A; }
 </style>
 </head>
 <body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-emoji">🎊</div>
+    <div class="login-title">팔순 산수연</div>
+    <div class="login-sub">가족 준비 체크리스트</div>
+    <button class="google-btn" onclick="signInGoogle()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
+      Google 계정으로 시작하기
+    </button>
+    <div class="login-note">가족 구성원만 접근 가능합니다</div>
+  </div>
+</div>
 
 <header>
   <div class="sub">🎊 &nbsp; 산수연 준비 &nbsp; 🎊</div>
@@ -156,6 +213,11 @@ body.edit .add-sec-btn { display: block; }
     <div class="prog-pct" id="prog-pct">0%</div>
   </div>
   <div class="last-saved" id="last-saved"></div>
+  <div id="user-bar">
+    <img class="user-avatar" id="user-avatar" src="" alt=""/>
+    <span class="user-name" id="user-name"></span>
+    <button class="logout-btn" onclick="signOut()">로그아웃</button>
+  </div>
 </header>
 
 <div id="setup-banner">
@@ -280,31 +342,62 @@ var dbRef, notesDbRef;
 var ctr = 100;
 function uid(){ return "x"+(++ctr)+"_"+Date.now(); }
 
+// Current user
+var currentUser = null;
+
 // Firebase init
 if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
   try{
     firebase.initializeApp(firebaseConfig);
-    var db = firebase.database();
-    dbRef = db.ref("sansooyeon/sections");
+    var db   = firebase.database();
+    var auth = firebase.auth();
+    dbRef    = db.ref("sansooyeon/sections");
     notesDbRef = db.ref("sansooyeon/notes");
     configOk = true;
 
-    dbRef.on("value", function(snap){
-      if(snap.exists()){ sections = snap.val(); render(); }
-      else { dbRef.set(sections); }
-    });
-    notesDbRef.on("value", function(snap){
-      if(snap.exists()){
-        notesVal = snap.val();
-        var ta = document.getElementById("notes-ta");
-        if(ta && document.activeElement !== ta) ta.value = notesVal;
+    // Auth state
+    auth.onAuthStateChanged(function(user){
+      if(user){
+        currentUser = user;
+        // Show user bar
+        var bar = document.getElementById("user-bar");
+        bar.classList.add("show");
+        document.getElementById("user-name").textContent = user.displayName || user.email;
+        if(user.photoURL) document.getElementById("user-avatar").src = user.photoURL;
+        // Hide login screen
+        document.getElementById("login-screen").style.display = "none";
+        // Start DB listeners
+        dbRef.on("value", function(snap){
+          if(snap.exists()){ sections = snap.val(); render(); }
+          else { dbRef.set(sections); }
+        });
+        notesDbRef.on("value", function(snap){
+          if(snap.exists()){
+            notesVal = snap.val();
+            var ta = document.getElementById("notes-ta");
+            if(ta && document.activeElement !== ta) ta.value = notesVal;
+          }
+        });
+      } else {
+        currentUser = null;
+        document.getElementById("login-screen").style.display = "flex";
+        document.getElementById("user-bar").classList.remove("show");
       }
     });
   }catch(e){ console.error(e); }
 } else {
   document.getElementById("setup-banner").style.display = "block";
+  document.getElementById("login-screen").style.display = "none";
   try{ var d=localStorage.getItem(LS_SECS); if(d) sections=JSON.parse(d); }catch(e){}
   try{ notesVal=localStorage.getItem(LS_NOTES)||""; }catch(e){}
+}
+
+function signInGoogle(){
+  var provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(function(e){ alert("로그인 실패: "+e.message); });
+}
+function signOut(){
+  auth.signOut();
 }
 
 function saveSections(){
@@ -398,14 +491,20 @@ function renderSecs(){
 function toggleItem(sid,iid){
   var it=sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;});
   it.done=!it.done;
+  it.updatedBy = currentUser ? (currentUser.displayName||currentUser.email) : "";
+  it.updatedAt = new Date().toLocaleString("ko-KR");
   saveSections(); render();
 }
 function updateAssignee(sid,iid,v){
-  sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;}).assignee=v;
+  var it=sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;});
+  it.assignee=v;
+  it.updatedBy = currentUser ? (currentUser.displayName||currentUser.email) : "";
 }
 function updateCost(sid,iid,v){
   var raw=v.replace(/[^0-9]/g,"");
-  sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;}).cost=raw;
+  var it=sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;});
+  it.cost=raw;
+  it.updatedBy = currentUser ? (currentUser.displayName||currentUser.email) : "";
 }
 function fmt(n){ return Number(n||0).toLocaleString("ko-KR"); }
 function delItem(sid,iid){
