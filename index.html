@@ -224,7 +224,7 @@ body.em .ibtns{display:flex!important;}
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"/>
       Google 계정으로 시작하기
     </button>
-    <div class="lg-nt">초대 링크로 들어오면 바로 참여됩니다</div>
+    <div class="lg-nt" id="lg-nt-msg">Google 로그인 후 바로 참여됩니다</div>
   </div>
 </div>
 <div id="app">
@@ -337,18 +337,20 @@ function parseInviteToken(){
 }
 
 function checkInviteToken(token){
-  // inviteLinks/{token} 에서 초대 정보 읽기
   db.ref("inviteLinks/"+token).once("value",function(snap){
     var d=snap.val();
-    if(!d){return;}  // 유효하지 않은 토큰
-    pendingInvData=d;
-    pendingInvPid=d.pid;
+    if(!d){return;}
+    pendingInvData=d;pendingInvPid=d.pid;
     var pname=d.pname||"프로젝트";
-    var role=RKO[d.role]||d.role;
-    // 로그인 전이면 안내 배너 표시
+    var roleName=RKO[d.role]||d.role;
+    // 로그인 화면 안내 표시
     var notice=document.getElementById("inv-notice");
-    notice.innerHTML="<strong>🎉 "+esc(pname)+"</strong><span>"+esc(role)+" 권한으로 초대받으셨어요. 로그인하면 바로 참여됩니다.</span>";
+    notice.innerHTML="<strong>🎉 "+esc(pname)+"</strong><span>"+esc(roleName)+" 권한으로 초대받으셨어요.<br>Google 로그인하면 바로 참여됩니다.</span>";
     notice.style.display="block";
+    var nt=document.getElementById("lg-nt-msg");
+    if(nt)nt.style.display="none";
+    var sb=document.querySelector(".lg-sb");
+    if(sb)sb.textContent="아래 버튼으로 로그인하면 자동 참여돼요";
   });
 }
 
@@ -450,22 +452,38 @@ window.onload=function(){
       if(pendingInvToken){
         db.ref("inviteLinks/"+pendingInvToken).once("value",function(snap){
           var d=snap.val();
-          if(!d){history.replaceState(null,"",location.pathname);loadProjs();return;}
-          pendingInvData=d;pendingInvPid=d.pid;
-          var pname=d.pname||"프로젝트";
-          var roleName=RKO[d.role]||d.role;
+          if(!d){
+            showToast("유효하지 않거나 만료된 초대 링크예요");
+            history.replaceState(null,"",location.pathname);
+            loadProjs();return;
+          }
+          // 만료 확인
+          if(d.expiresAt && Date.now() > d.expiresAt){
+            showToast("초대 링크가 만료되었어요 (7일 초과)");
+            history.replaceState(null,"",location.pathname);
+            loadProjs();return;
+          }
+          var pid2=d.pid;var role2=d.role||"viewer";var pname2=d.pname||"프로젝트";
           // 이미 멤버인지 확인
-          db.ref("projects/"+d.pid+"/members/"+ekey).once("value",function(ms){
+          db.ref("projects/"+pid2+"/members/"+ekey).once("value",function(ms){
             if(ms.val()){
-              showToast("이미 참여 중인 프로젝트예요");
+              showToast("✅ 이미 참여 중인 프로젝트예요");
               history.replaceState(null,"",location.pathname);
               loadProjs();return;
             }
-            // 참여 배너 표시
-            document.getElementById("inv-pname").textContent="🎉 "+pname+" 초대";
-            document.getElementById("inv-msg").textContent=roleName+" 권한으로 초대받았어요. 참여하시겠어요?";
-            document.getElementById("inv-banner").style.display="block";
-            loadProjs();
+            // 자동으로 멤버 추가
+            db.ref("projects/"+pid2+"/members/"+ekey).set({
+              email:u.email,
+              name:u.displayName||u.email,
+              photoURL:u.photoURL||"",
+              role:role2
+            },function(err){
+              history.replaceState(null,"",location.pathname);
+              if(!err){
+                showToast("🎉 "+pname2+" 프로젝트에 참여했어요!");
+              }
+              loadProjs();
+            });
           });
         });
       } else {
