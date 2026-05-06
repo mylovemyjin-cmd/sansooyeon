@@ -26,6 +26,8 @@ button,input,textarea{font-family:inherit;}
 .lg-em{font-size:48px;margin-bottom:12px;}
 .lg-ti{font-size:22px;font-weight:700;color:var(--pr);margin-bottom:4px;}
 .lg-sb{font-size:13px;color:#aaa;margin-bottom:28px;}
+.lg-inv{background:#fff9e6;border:1.5px solid var(--ac);border-radius:12px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#6a4a00;text-align:left;display:none;}
+.lg-inv strong{display:block;font-size:13px;margin-bottom:3px;}
 .g-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 20px;border-radius:12px;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#333;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.08);}
 .g-btn img{width:20px;height:20px;}
 .lg-nt{font-size:11px;color:#ccc;margin-top:14px;}
@@ -144,6 +146,12 @@ body.em .ibtns{display:flex!important;}
 .rr{display:flex;gap:14px;margin-bottom:10px;}
 .rr label{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;}
 .invb{width:100%;padding:10px;background:linear-gradient(135deg,var(--bl),#4A90D9);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;}
+/* 초대 링크 버튼 */
+.lnkb{width:100%;padding:10px;background:linear-gradient(135deg,var(--gr),#6B9E4A);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;margin-top:7px;}
+.lnk-box{background:#f0f8f0;border:1.5px solid var(--gr);border-radius:9px;padding:10px 13px;margin-top:8px;display:none;}
+.lnk-box p{font-size:11px;color:#556B2F;margin-bottom:7px;}
+.lnk-txt{width:100%;border:1.5px solid #c0d8b0;border-radius:7px;padding:6px 9px;font-size:11px;color:#333;background:#fff;outline:none;margin-bottom:6px;}
+.lnk-cp{width:100%;padding:7px;background:var(--gr);color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;}
 .pnd{display:flex;justify-content:space-between;align-items:center;padding:8px 15px;font-size:12px;color:#aaa;background:#fafafa;}
 .pndc{font-size:11px;padding:3px 8px;border:none;border-radius:8px;background:#f5f5f5;cursor:pointer;color:var(--re);}
 .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:16px;}
@@ -185,6 +193,12 @@ body.em .ibtns{display:flex!important;}
 .hac{font-size:13px;color:#333;font-weight:500;}
 .hmt{font-size:11px;color:#aaa;margin-top:2px;}
 .hwh{font-weight:600;color:var(--ac);}
+/* 초대 수락 배너 */
+#inv-banner{display:none;background:linear-gradient(135deg,#1a6b2b,#2d9e46);color:#fff;padding:14px 16px;margin:10px 14px;border-radius:13px;font-size:13px;}
+#inv-banner strong{display:block;font-size:15px;margin-bottom:4px;}
+.inv-btns{display:flex;gap:8px;margin-top:10px;}
+.inv-ok{flex:1;padding:9px;background:#fff;color:#1a6b2b;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;}
+.inv-no{flex:1;padding:9px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:9px;font-size:13px;cursor:pointer;}
 #toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(35,35,35,.92);color:#fff;padding:10px 20px;border-radius:22px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.25);z-index:600;white-space:nowrap;}
 #toast.show{display:block;animation:fu .2s ease;}
 @keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
@@ -204,12 +218,13 @@ body.em .ibtns{display:flex!important;}
   <div class="login-box">
     <div class="lg-em">📋</div>
     <div class="lg-ti">체크리스트</div>
+    <div id="inv-notice" class="lg-inv"></div>
     <div class="lg-sb">Google 계정으로 시작하세요</div>
     <button class="g-btn" onclick="gLogin()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"/>
       Google 계정으로 시작하기
     </button>
-    <div class="lg-nt">초대받은 멤버만 프로젝트에 참여 가능합니다</div>
+    <div class="lg-nt">초대 링크로 들어오면 바로 참여됩니다</div>
   </div>
 </div>
 <div id="app">
@@ -223,6 +238,14 @@ body.em .ibtns{display:flex!important;}
     </div>
   </div>
   <div id="pscr">
+    <div id="inv-banner">
+      <strong id="inv-pname"></strong>
+      <span id="inv-msg"></span>
+      <div class="inv-btns">
+        <button class="inv-ok" onclick="acceptInvite()">✅ 참여하기</button>
+        <button class="inv-no" onclick="declineInvite()">나중에</button>
+      </div>
+    </div>
     <div class="ptb"><h2>📁 내 프로젝트</h2><button class="npb" id="npb" onclick="openNP()">+ 새 프로젝트</button></div>
     <div class="pgrid" id="pgrid"><div class="emp"><div class="big">⏳</div><p>불러오는 중...</p></div></div>
   </div>
@@ -302,84 +325,235 @@ function showToast(m){var t=document.getElementById("toast");t.textContent=m;t.c
 function isInApp(){return /kakaotalk|instagram|fban|fbav|naver|line|wechat|micromessenger/.test(navigator.userAgent.toLowerCase());}
 function openBrowser(){var u="comfy-smakager-2a9931.netlify.app";if(/android/.test(navigator.userAgent.toLowerCase()))location.href="intent://"+u+"#Intent;scheme=https;package=com.android.chrome;end";else location.href="https://"+u;}
 function copyUrl(){try{navigator.clipboard.writeText("https://comfy-smakager-2a9931.netlify.app");}catch(e){}showToast("주소 복사됨 ✓");}
-var db,auth,cu=null,cr=null,pid=null,proj=null,secs=[],ntv="",em=false,mcb=null,sc=COLORS[0],se="📋",snc="#C8860A",tiEd=false;
-firebase.initializeApp(FC);db=firebase.database();auth=firebase.auth();
-if(isInApp()){document.getElementById("inapp").classList.add("show");}
-else{
-  auth.getRedirectResult().catch(function(e){console.error(e);});
-  auth.onAuthStateChanged(function(u){
-    if(u){cu=u;document.getElementById("login").classList.remove("show");document.getElementById("app").style.display="block";document.getElementById("uav").src=u.photoURL||"";document.getElementById("unm").textContent=u.displayName||u.email;loadProjs();}
-    else{cu=null;document.getElementById("login").classList.add("show");document.getElementById("app").style.display="none";}
+
+// ── 초대 링크 토큰 처리 ──────────────────────────────────────
+var pendingInvToken=null;  // URL에서 파싱한 토큰
+var pendingInvData=null;   // Firebase에서 읽은 초대 데이터
+var pendingInvPid=null;    // 초대된 프로젝트 ID
+
+function parseInviteToken(){
+  var p=new URLSearchParams(window.location.search);
+  return p.get("inv")||null;
+}
+
+function checkInviteToken(token){
+  // inviteLinks/{token} 에서 초대 정보 읽기
+  db.ref("inviteLinks/"+token).once("value",function(snap){
+    var d=snap.val();
+    if(!d){return;}  // 유효하지 않은 토큰
+    pendingInvData=d;
+    pendingInvPid=d.pid;
+    var pname=d.pname||"프로젝트";
+    var role=RKO[d.role]||d.role;
+    // 로그인 전이면 안내 배너 표시
+    var notice=document.getElementById("inv-notice");
+    notice.innerHTML="<strong>🎉 "+esc(pname)+"</strong><span>"+esc(role)+" 권한으로 초대받으셨어요. 로그인하면 바로 참여됩니다.</span>";
+    notice.style.display="block";
   });
 }
+
+function acceptInvite(){
+  if(!pendingInvData||!cu)return;
+  var ekey=ek(cu.email);
+  var role=pendingInvData.role||"viewer";
+  var pid=pendingInvPid;
+  // members에 추가
+  db.ref("projects/"+pid+"/members/"+ekey).set({
+    email:cu.email,name:cu.displayName||cu.email,photoURL:cu.photoURL||"",role:role
+  },function(err){
+    if(!err){
+      showToast("🎉 프로젝트에 참여했어요!");
+      document.getElementById("inv-banner").style.display="none";
+      pendingInvData=null;pendingInvToken=null;pendingInvPid=null;
+      // URL 정리
+      history.replaceState(null,"",location.pathname);
+      // 목록 새로고침
+      setTimeout(loadProjs,400);
+    }
+  });
+}
+
+function declineInvite(){
+  document.getElementById("inv-banner").style.display="none";
+  pendingInvData=null;pendingInvToken=null;pendingInvPid=null;
+  history.replaceState(null,"",location.pathname);
+}
+
+// 초대 링크 생성
+function genInvLink(role){
+  if(!pid||!isAdm())return;
+  var token=uid()+"_"+Math.random().toString(36).slice(2,8);
+  var pname=proj.name||"프로젝트";
+  db.ref("inviteLinks/"+token).set({
+    pid:pid,pname:pname,role:role,
+    createdBy:cu.email,createdAt:ts(),
+    expiresAt:Date.now()+(7*24*60*60*1000) // 7일 유효
+  },function(err){
+    if(!err){
+      var url="https://comfy-smakager-2a9931.netlify.app?inv="+token;
+      document.getElementById("lnk-val").value=url;
+      document.getElementById("lnk-box").style.display="block";
+    }
+  });
+}
+
+function copyInvLink(){
+  var v=document.getElementById("lnk-val").value;
+  try{navigator.clipboard.writeText(v);}catch(e){}
+  showToast("초대 링크 복사됨 ✓");
+}
+// ─────────────────────────────────────────────────────────────
+
+firebase.initializeApp(FC);
+var db=firebase.database(),auth=firebase.auth();
+var cu=null,ekey="",pid=null,proj=null,cr="viewer",secs=[],ntv="",em=false,tiEd=false,mcb=null,sc="",se="📋",snc="#C8860A";
+
+// 산수연 데이터 마이그레이션 (한 번만 실행)
+function migrateSansooyeon(){
+  db.ref("sansooyeon/migrated").once("value",function(snap){
+    if(snap.val())return; // 이미 마이그레이션됨
+    db.ref("sansooyeon").once("value",function(oldSnap){
+      var old=oldSnap.val();
+      if(!old||!old.sections)return;
+      var k="sansooyeon_legacy_"+Date.now();
+      var ekey2=ek(cu.email);
+      var ms={};ms[ekey2]={email:cu.email,name:cu.displayName||cu.email,photoURL:cu.photoURL||"",role:"admin"};
+      var p={id:k,name:"🎊 팔순 산수연",emoji:"🎊",color:"#C8860A",createdAt:ts(),createdBy:cu.email,
+        members:ms,sections:old.sections,notes:old.notes||""};
+      db.ref("projects/"+k).set(p,function(err){
+        if(!err){
+          db.ref("sansooyeon/migrated").set(true);
+          showToast("기존 산수연 체크리스트가 복원되었어요 ✓");
+        }
+      });
+    });
+  });
+}
+
+window.onload=function(){
+  if(isInApp()){document.getElementById("inapp").classList.add("show");return;}
+  // URL에서 초대 토큰 파싱
+  pendingInvToken=parseInviteToken();
+
+  auth.getRedirectResult().catch(function(e){console.error(e);});
+  auth.onAuthStateChanged(function(u){
+    cu=u;
+    if(u){
+      ekey=ek(u.email);
+      document.getElementById("login").classList.remove("show");
+      document.getElementById("app").classList.add("show");
+      document.getElementById("uav").src=u.photoURL||"";
+      document.getElementById("unm").textContent=u.displayName||u.email;
+      // 산수연 데이터 마이그레이션
+      migrateSansooyeon();
+      // 초대 토큰 처리
+      if(pendingInvToken){
+        db.ref("inviteLinks/"+pendingInvToken).once("value",function(snap){
+          var d=snap.val();
+          if(!d){history.replaceState(null,"",location.pathname);loadProjs();return;}
+          pendingInvData=d;pendingInvPid=d.pid;
+          var pname=d.pname||"프로젝트";
+          var roleName=RKO[d.role]||d.role;
+          // 이미 멤버인지 확인
+          db.ref("projects/"+d.pid+"/members/"+ekey).once("value",function(ms){
+            if(ms.val()){
+              showToast("이미 참여 중인 프로젝트예요");
+              history.replaceState(null,"",location.pathname);
+              loadProjs();return;
+            }
+            // 참여 배너 표시
+            document.getElementById("inv-pname").textContent="🎉 "+pname+" 초대";
+            document.getElementById("inv-msg").textContent=roleName+" 권한으로 초대받았어요. 참여하시겠어요?";
+            document.getElementById("inv-banner").style.display="block";
+            loadProjs();
+          });
+        });
+      } else {
+        loadProjs();
+      }
+    } else {
+      document.getElementById("login").classList.add("show");
+      document.getElementById("app").classList.remove("show");
+      // 로그인 전 초대 안내
+      if(pendingInvToken)checkInviteToken(pendingInvToken);
+    }
+  });
+};
+
 function gLogin(){var p=new firebase.auth.GoogleAuthProvider();auth.signInWithPopup(p).catch(function(){auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());});}
 function sOut(){auth.signOut();}
 function addHist(it,e){if(!it.history)it.history=[];it.history.unshift(e);if(it.history.length>50)it.history=it.history.slice(0,50);}
+
 function loadProjs(){
   db.ref("projects").on("value",function(snap){
-    var d=snap.val()||{},f={};
-    var ekey=ek(cu.email);
+    var d=snap.val()||{};
+    var f={};
     Object.keys(d).forEach(function(k){if(d[k].members&&d[k].members[ekey])f[k]=d[k];});
     renderPL(f);
   });
 }
+
 function renderPL(ps){
   var ks=Object.keys(ps);
-  if(!ks.length){document.getElementById("pgrid").innerHTML="<div class='emp'><div class='big'>📋</div><p>아직 프로젝트가 없어요.<br>새 프로젝트를 만들거나<br>관리자에게 초대를 요청하세요.</p></div>";return;}
+  if(!ks.length){document.getElementById("pgrid").innerHTML="<div class='emp'><div class='big'>📋</div><p>아직 프로젝트가 없어요.<br>새 프로젝트를 만들거나<br>초대 링크로 참여하세요.</p></div>";return;}
   document.getElementById("pgrid").innerHTML=ks.map(function(k){
-    var p=ps[k],ekey=ek(cu.email);
-    var role=(p.members&&p.members[ekey])?p.members[ekey].role:"viewer";
+    var p=ps[k];var role=(p.members&&p.members[ekey])?p.members[ekey].role:"viewer";
     var all=[],dn=0;
     if(p.sections)p.sections.filter(Boolean).forEach(function(s){if(s&&s.items)s.items.filter(Boolean).forEach(function(it){all.push(it);if(it&&it.done)dn++;});});
-    var pct=all.length?Math.round(dn/all.length*100):0;
+    var tot=all.length,pct=tot?Math.round(dn/tot*100):0;
     return "<div class='pc' onclick='opProj(\""+k+"\")'>"
       +"<div class='pi' style='background:"+esc(p.color||"#C8860A")+"22'>"+esc(p.emoji||"📋")+"</div>"
       +"<div class='pif'><div class='pn'>"+esc(p.name||"프로젝트")+"<span class='rb rb-"+role+"'>"+RKO[role]+"</span></div>"
       +"<div class='pp'><div class='mpb'><div class='mpf' style='width:"+pct+"%;background:"+esc(p.color||"#C8860A")+"'></div></div>"
-      +"<span style='font-size:10px;color:#aaa'>"+dn+"/"+all.length+" ("+pct+"%)</span></div></div>"
+      +"<span class='pm'>"+dn+"/"+tot+"</span></div></div>"
       +(role==="admin"?"<div class='pa'>"
-        +"<button class='pbtn' onclick='event.stopPropagation();edProj(\""+k+"\")'>✏️</button>"
-        +"<button class='pbtn' onclick='event.stopPropagation();delProj(\""+k+"\")'>🗑️</button>"
+        +"<button class='pbtn' onclick='event.stopPropagation();edProj(\""+k+"\")' title='이름 변경'>✏️</button>"
+        +"<button class='pbtn' onclick='event.stopPropagation();delProj(\""+k+"\")' title='삭제'>🗑️</button>"
         +"</div>":"")
       +"</div>";
   }).join("");
 }
+
 function opProj(k){
-  pid=k;
+  pid=k;em=false;document.body.classList.remove("em");
   db.ref("projects/"+k).once("value",function(snap){
     proj=snap.val();if(!proj){showToast("프로젝트를 찾을 수 없어요");return;}
-    var ekey=ek(cu.email);
     cr=(proj.members&&proj.members[ekey])?proj.members[ekey].role:"viewer";
+    document.getElementById("pscr").style.display="none";
+    document.getElementById("cscr").style.display="";
     document.getElementById("h-bk").style.display="block";
-    document.getElementById("h-ti").textContent=proj.name||"프로젝트";
-    document.getElementById("npb").style.display="none";
-    var rb=document.getElementById("rb");rb.className="rb rb-"+cr;rb.textContent=RKO[cr]||cr;rb.style.display="block";
-    var ht=document.getElementById("h-ti");
+    var ht=document.getElementById("h-ti");ht.textContent=proj.name||"프로젝트";
+    document.getElementById("rb").textContent=RKO[cr];document.getElementById("rb").className="rb rb-"+cr;document.getElementById("rb").style.display="";
     if(cr==="admin"){ht.classList.add("ed");ht.title="클릭해서 이름 변경";ht.onclick=startTi;document.getElementById("etg").style.display="block";}
     else{ht.classList.remove("ed");ht.title="";ht.onclick=null;document.getElementById("etg").style.display=cr==="editor"?"block":"none";}
     document.getElementById("mtb").style.display=cr==="admin"?"block":"none";
-    document.getElementById("pscr").style.display="none";document.getElementById("cscr").style.display="block";
+    setTab("cl");
     db.ref("projects/"+k+"/sections").off();db.ref("projects/"+k+"/notes").off();
     db.ref("projects/"+k+"/sections").on("value",function(s){secs=s.val()||[];if(!Array.isArray(secs))secs=Object.values(secs);renderSecs();});
     db.ref("projects/"+k+"/notes").on("value",function(s){ntv=s.val()||"";var ta=document.getElementById("nta");if(ta&&document.activeElement!==ta)ta.value=ntv;});
-    setTab("cl");
   });
 }
+
 function goBack(){
-  if(tiEd)cancelTi();
+  document.getElementById("cscr").style.display="none";
+  document.getElementById("pscr").style.display="";
+  document.getElementById("h-bk").style.display="none";
+  document.getElementById("h-ti").textContent="내 프로젝트";
+  document.getElementById("h-ti").classList.remove("ed");
+  document.getElementById("h-ti").onclick=null;
+  document.getElementById("rb").style.display="none";
   if(pid){db.ref("projects/"+pid+"/sections").off();db.ref("projects/"+pid+"/notes").off();}
-  pid=null;proj=null;cr=null;em=false;document.body.classList.remove("em");
-  document.getElementById("cscr").style.display="none";document.getElementById("pscr").style.display="block";
-  document.getElementById("h-bk").style.display="none";document.getElementById("h-ti").textContent="내 프로젝트";
-  document.getElementById("h-ti").classList.remove("ed");document.getElementById("h-ti").onclick=null;
-  document.getElementById("npb").style.display="block";document.getElementById("etg").style.display="none";document.getElementById("rb").style.display="none";
-  var et=document.getElementById("etg");et.textContent="✏️ 편집";et.classList.remove("on");
+  pid=null;proj=null;cr="viewer";em=false;document.body.classList.remove("em");
+  document.getElementById("etg").textContent="✏️ 편집";document.getElementById("etg").classList.remove("on");
 }
+
 function startTi(){if(cr!=="admin")return;tiEd=true;var inp=document.getElementById("h-inp");inp.value=proj.name||"";document.getElementById("h-ti").style.display="none";inp.style.display="block";inp.focus();}
 function saveTi(){var v=document.getElementById("h-inp").value.trim();if(v&&v!==(proj.name||"")){db.ref("projects/"+pid+"/name").set(v);proj.name=v;document.getElementById("h-ti").textContent=v;showToast("이름 변경됨 ✓");}cancelTi();}
-function cancelTi(){tiEd=false;document.getElementById("h-inp").style.display="none";document.getElementById("h-ti").style.display="block";document.getElementById("h-ti").textContent=proj?proj.name||"":"";}
+function cancelTi(){tiEd=false;document.getElementById("h-inp").style.display="none";document.getElementById("h-ti").style.display="block";document.getElementById("h-ti").textContent=proj?proj.name||"":" ";}
 function saveSecs(){if(!pid)return;db.ref("projects/"+pid+"/sections").set(secs);}
+
 function updProg(){var all=secs.filter(Boolean).flatMap(function(s){return(s&&s.items)?s.items.filter(Boolean):[];});var tot=all.length,dn=all.filter(function(i){return i&&i.done;}).length;var pct=tot?Math.round(dn/tot*100):0;document.getElementById("pfi").style.width=pct+"%";document.getElementById("ptt").textContent=dn+"/"+tot;}
+
 function renderSecs(){
   updProg();
   var h=cr==="viewer"?"<div class='vmsg'>👁 뷰어 권한 — 읽기만 가능합니다</div>":"";
@@ -389,46 +563,56 @@ function renderSecs(){
     var sd=its.filter(function(i){return i.done;}).length;
     var sc2=its.reduce(function(a,i){return a+Number(i.cost||0);},0);
     var ihtml=its.map(function(it,idx){
-      var last=idx===its.length-1?"style='border-bottom:none'":"";
-      var bg=it.done?"style='background:"+esc(s.color)+"08'":"";
-      return "<div class='ir' "+bg+" "+last+">"
-        +"<div class='chk"+(it.done?" on":"")+(canEd()?" cl":"")+"' style='border-color:"+(it.done?esc(s.color):"#ccc")+";background:"+(it.done?esc(s.color):"#fff")+"' "+(canEd()?"onclick='togIt(\""+s.id+"\",\""+it.id+"\")' ":"")+">"
-        +"<svg width='11' height='8' viewBox='0 0 11 8' fill='none'><path d='M1 4L4 7L10 1' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg></div>"
+      if(!it)return"";
+      var sid=s.id,iid=it.id;
+      var hasCost=it.cost&&Number(it.cost)>0;
+      var hasAss=it.assignee&&it.assignee.trim();
+      return"<div class='ir'>"
+        +"<div class='chk"+(canEd()?" cl":"")+(it.done?" on":"")+"' style='"+(it.done?"background:"+s.color+";border-color:"+s.color:"")+"' onclick='"+(canEd()?"togIt(\""+sid+"\",\""+iid+"\")":" ")+"'>"
+        +"<svg width='11' height='9' viewBox='0 0 11 9'><polyline points='1,5 4,8 10,1' stroke='#fff' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+        +"</div>"
         +"<div class='ib'>"
-        +"<span class='it"+(it.done?" dn":"")+"' onclick='opHist(\""+s.id+"\",\""+it.id+"\")' title='이력 보기'>"+esc(it.text)+" <span style='font-size:9px;color:#ddd'>📋</span></span>"
-        +(it.updatedBy?"<span class='il'>✏️ "+esc(it.updatedBy)+(it.updatedAt?" · "+esc(it.updatedAt):"")+"</span>":"")
+        +"<span class='it"+(it.done?" dn":"")+"' onclick='opHist(\""+sid+"\",\""+iid+"\")'>"+esc(it.text)+"</span>"
+        +(it.updatedBy?"<span class='il'>"+esc(it.updatedBy)+" · "+esc(it.updatedAt||"")+"</span>":"")
         +"<div class='mr'>"
-        +(canEd()
-          ?"<span style='font-size:11px;color:"+(it.assignee?esc(s.color):"#ccc")+"'>👤</span>"
-          +"<input class='ai"+(it.assignee?" has":"")+"' style='border-bottom-color:"+(it.assignee?esc(s.color):"#ddd")+";color:"+(it.assignee?esc(s.color):"#bbb")+"' placeholder='담당자' value='"+esc(it.assignee||"")+"' oninput='setAss(\""+s.id+"\",\""+it.id+"\",this.value)' onblur='saveSecs()'/>"
-          +"<div class='cw'><span style='font-size:11px;color:"+(it.cost?"#556B2F":"#ccc")+"'>💴</span>"
-          +"<input class='ci"+(it.cost?" has":"")+"' inputmode='numeric' placeholder='비용' value='"+(it.cost?fmt(it.cost):"")+"' oninput='setCst(\""+s.id+"\",\""+it.id+"\",this.value)' onblur='saveSecs()'/><span class='cu'>원</span></div>"
-          :((it.assignee?"<span style='font-size:11px;color:#aaa'>👤 "+esc(it.assignee)+"</span>":"")+(it.cost?"<span style='font-size:11px;color:var(--gr);font-weight:600'>💴 "+fmt(it.cost)+"원</span>":""))
-        )
+        +"<input class='ai"+(hasAss?" has":"")+"' value='"+esc(it.assignee||"")+"' placeholder='담당자' onchange='setAss(\""+sid+"\",\""+iid+"\",this.value)' onblur='saveSecs()' "+(canEd()?"":"readonly")+">"
+        +"<div class='cw'><input class='ci"+(hasCost?" has":"")+"' value='"+esc(it.cost||"")+"' placeholder='비용' onchange='setCst(\""+sid+"\",\""+iid+"\",this.value)' onblur='saveSecs()' "+(canEd()?"":"readonly")+">"
+        +"<span class='cu'>"+(it.cost?"원":"")+"</span></div>"
         +"</div></div>"
-        +(canEd()?"<div class='ibtns'><button class='ibtn' style='color:"+esc(s.color)+"' onclick='edIt(\""+s.id+"\",\""+it.id+"\")'>✏️</button><button class='ibtn' style='color:#cc3333' onclick='delIt(\""+s.id+"\",\""+it.id+"\")'>🗑️</button></div>":"")
+        +"<div class='ibtns'>"
+        +"<button class='ibtn' onclick='edIt(\""+sid+"\",\""+iid+"\")' title='수정'>✏️</button>"
+        +"<button class='ibtn' onclick='delIt(\""+sid+"\",\""+iid+"\")' title='삭제'>🗑️</button>"
+        +"</div>"
         +"</div>";
     }).join("");
-    return "<div class='sc' style='border:2px solid "+esc(s.color)+"33'>"
-      +"<div class='shd' style='background:linear-gradient(135deg,"+esc(s.color)+"22,"+esc(s.color)+"0a);border-bottom:1px solid "+esc(s.color)+"22'>"
-      +"<span class='st' style='color:"+esc(s.color)+"'>"+esc(s.title)+"</span>"
-      +"<span class='sb' style='background:"+esc(s.color)+"'>"+sd+"/"+its.length+"</span>"
+    return"<div class='sc'>"
+      +"<div class='shd' style='background:linear-gradient(135deg,"+s.color+"18,"+s.color+"08)'>"
+      +"<span class='st' style='color:"+s.color+"'>"+esc(s.title)+"</span>"
+      +"<span class='sb' style='background:"+s.color+"'>"+sd+"/"+its.length+"</span>"
       +(sc2>0?"<span class='scb2'>"+fmt(sc2)+"원</span>":"")
-      +(canEd()?"<div class='seb'><button class='ibtn' style='color:"+esc(s.color)+"' onclick='edSec(\""+s.id+"\")'>✏️</button><button class='ibtn' style='color:#cc3333' onclick='delSec(\""+s.id+"\")'>🗑️</button></div>":"")
-      +"</div>"+ihtml
-      +(canEd()?"<div class='addr' style='background:"+esc(s.color)+"05'><input class='ainp' id='ni_"+s.id+"' placeholder='+ 새 항목 추가 후 Enter' onkeydown='if(event.key===\"Enter\")addIt(\""+s.id+"\")'><button class='abtn' style='background:"+esc(s.color)+"' onclick='addIt(\""+s.id+"\")'>추가</button></div>":"")
+      +"<div class='seb'>"
+      +"<button class='ibtn' onclick='edSec(\""+s.id+"\")'>✏️</button>"
+      +"<button class='ibtn' onclick='delSec(\""+s.id+"\")'>🗑️</button>"
+      +"</div>"
+      +"</div>"
+      +ihtml
+      +"<div class='addr'>"
+      +"<input class='ainp' id='ni_"+s.id+"' placeholder='새 항목 추가' onkeydown='if(event.key===\"Enter\")addIt(\""+s.id+"\")'>"
+      +"<button class='abtn' style='background:"+s.color+"' onclick='addIt(\""+s.id+"\")'>추가</button>"
+      +"</div>"
       +"</div>";
   }).join("");
   document.getElementById("secs").innerHTML=h;
 }
+
 function findIt(sid,iid){var s=secs.find(function(s){return s&&s.id===sid;});if(!s||!s.items)return null;return s.items.find(function(i){return i&&i.id===iid;})||null;}
-function togIt(sid,iid){var it=findIt(sid,iid);if(!it)return;it.done=!it.done;var w=who(),a=ts();it.updatedBy=w;it.updatedAt=a;addHist(it,{type:"check",value:it.done,who:w,at:a});saveSecs();}
+function togIt(sid,iid){if(!canEd())return;var it=findIt(sid,iid);if(!it)return;it.done=!it.done;var w=who(),a=ts();it.updatedBy=w;it.updatedAt=a;addHist(it,{type:"check",value:it.done,who:w,at:a});saveSecs();}
 function setAss(sid,iid,v){var it=findIt(sid,iid);if(!it)return;var pv=it.assignee||"";it.assignee=v;var w=who();it.updatedBy=w;if(pv!==v)addHist(it,{type:"assignee",prev:pv,value:v,who:w,at:ts()});}
 function setCst(sid,iid,v){var raw=v.replace(/[^0-9]/g,"");var it=findIt(sid,iid);if(!it)return;var pv=it.cost||"";it.cost=raw;var w=who();it.updatedBy=w;if(pv!==raw)addHist(it,{type:"cost",prev:pv,value:raw,who:w,at:ts()});}
-function delIt(sid,iid){var s=secs.find(function(s){return s&&s.id===sid;});if(!s)return;s.items=s.items.filter(function(i){return i&&i.id!==iid;});saveSecs();}
-function addIt(sid){var inp=document.getElementById("ni_"+sid);var txt=inp.value.trim();if(!txt)return;var s=secs.find(function(s){return s&&s.id===sid;});if(!s)return;if(!s.items)s.items=[];var w=who(),a=ts();s.items.push({id:uid(),text:txt,done:false,assignee:"",cost:"",history:[{type:"add",who:w,at:a}],updatedBy:w,updatedAt:a});inp.value="";saveSecs();}
-function addSec(){secs.push({id:uid(),title:"새 섹션",color:COLORS[secs.length%COLORS.length],items:[]});saveSecs();}
-function delSec(sid){if(!confirm("섹션을 삭제할까요?"))return;secs=secs.filter(function(s){return s&&s.id!==sid;});saveSecs();}
+function delIt(sid,iid){if(!canEd())return;var s=secs.find(function(s){return s&&s.id===sid;});if(!s)return;s.items=s.items.filter(function(i){return i&&i.id!==iid;});saveSecs();}
+function addIt(sid){if(!canEd())return;var inp=document.getElementById("ni_"+sid);var txt=inp.value.trim();if(!txt)return;var s=secs.find(function(s){return s&&s.id===sid;});if(!s)return;if(!s.items)s.items=[];var w=who(),a=ts();s.items.push({id:uid(),text:txt,done:false,assignee:"",cost:"",history:[{type:"add",who:w,at:a}],updatedBy:w,updatedAt:a});inp.value="";saveSecs();}
+function addSec(){if(!canEd())return;secs.push({id:uid(),title:"새 섹션",color:COLORS[secs.length%COLORS.length],items:[]});saveSecs();}
+function delSec(sid){if(!isAdm())return;if(!confirm("섹션을 삭제할까요?"))return;secs=secs.filter(function(s){return s&&s.id!==sid;});saveSecs();}
 function edIt(sid,iid){var it=findIt(sid,iid);if(!it)return;document.getElementById("mtt").textContent="항목 수정";document.getElementById("minp").value=it.text;document.getElementById("cwrap").style.display="none";mcb=function(){var t=document.getElementById("minp").value.trim();if(t&&t!==it.text){var w=who(),a=ts();addHist(it,{type:"edit",value:t,who:w,at:a});it.text=t;it.updatedBy=w;it.updatedAt=a;}saveSecs();clModal();};opModal();}
 function edSec(sid){var s=secs.find(function(s){return s&&s.id===sid;});if(!s)return;document.getElementById("mtt").textContent="섹션 수정";document.getElementById("minp").value=s.title;document.getElementById("cwrap").style.display="block";sc=s.color;renCds();mcb=function(){var t=document.getElementById("minp").value.trim();if(t)s.title=t;s.color=sc;saveSecs();clModal();};opModal();}
 function renCds(){document.getElementById("cds").innerHTML=COLORS.map(function(c){return"<div class='cd"+(c===sc?" sl":"")+"' style='background:"+c+"' onclick='sc=\""+c+"\";renCds()'></div>";}).join("");}
@@ -437,39 +621,68 @@ function doSave(){if(mcb)mcb();}
 function clModal(){document.getElementById("modal").classList.remove("open");}
 function togEd(){em=!em;document.body.classList.toggle("em",em);var b=document.getElementById("etg");b.textContent=em?"✔ 편집 완료":"✏️ 편집";b.classList.toggle("on",em);document.getElementById("clh").textContent=em?"✏️ 항목 수정·삭제, 담당자·비용 입력, 섹션 추가 가능":"💡 항목 텍스트를 클릭하면 변경 이력을 볼 수 있어요";}
 function setTab(t){["cl","bg","nt","mb"].forEach(function(id){document.getElementById("tab-"+id).style.display=t===id?"":"none";});document.querySelectorAll(".tb").forEach(function(b,i){b.classList.toggle("active",["cl","bg","nt","mb"][i]===t);});if(t==="bg")renBg();if(t==="nt"){var ta=document.getElementById("nta");if(ta)ta.value=ntv;}if(t==="mb")renMb();}
-function renBg(){var gd=0;var h=secs.filter(Boolean).map(function(s){if(!s)return"";var its=(s.items||[]).filter(Boolean);var st=its.reduce(function(a,i){return a+Number(i.cost||0);},0);gd+=st;return"<div class='bcard'><div class='bsh' style='color:"+esc(s.color)+";background:linear-gradient(135deg,"+esc(s.color)+"18,"+esc(s.color)+"08)'>"+esc(s.title)+"</div>"+its.map(function(it){return"<div class='br2'><span class='bn"+(it.done?" dn":"")+"'>"+esc(it.text)+"</span>"+(it.assignee?"<span class='ba'>👤 "+esc(it.assignee)+"</span>":"")+(it.cost&&Number(it.cost)>0?"<span class='bc'>"+fmt(it.cost)+"원</span>":"<span class='bno'>미입력</span>")+"</div>";}).join("")+(st>0?"<div class='bst'><span>소계</span><span>"+fmt(st)+"원</span></div>":"")+"</div>";}).join("");document.getElementById("bgc").innerHTML="<div class='gb'><div><div class='gl'>💰 총 예상 비용</div><div class='gs'>입력된 항목 기준</div></div><div class='ga'>"+fmt(gd)+"원</div></div>"+h;}
+
+function renBg(){var gd=0;var h=secs.filter(Boolean).map(function(s){if(!s)return"";var its=(s.items||[]).filter(Boolean);var st=its.reduce(function(a,i){return a+Number(i.cost||0);},0);gd+=st;return"<div class='bcard'><div class='bsh' style='color:"+esc(s.color)+";background:linear-gradient(135deg,"+esc(s.color)+"18,"+esc(s.color)+"08)'>"+esc(s.title)+"</div>"+its.map(function(it){return"<div class='br2'><span class='bn"+(it.done?" dn":"")+"'>"+esc(it.text)+"</span>"+(it.assignee?"<span class='ba'>👤 "+esc(it.assignee)+"</span>":"")+(it.cost&&Number(it.cost)>0?"<span class='bc'>"+fmt(it.cost)+"원</span>":"<span class='bno'>미입력</span>")+"</div>";}).join("")+(st>0?"<div class='bst'><span>소계</span><span>"+fmt(st)+"원</span></div>":"")+  "</div>";}).join("");document.getElementById("bgc").innerHTML="<div class='gb'><div><div class='gl'>💰 총 예상 비용</div><div class='gs'>입력된 항목 기준</div></div><div class='ga'>"+fmt(gd)+"원</div></div>"+h;}
 function saveNt(){ntv=document.getElementById("nta").value;if(!pid)return;db.ref("projects/"+pid+"/notes").set(ntv);showToast("메모 저장 완료 ✓");}
+
 function renMb(){
-  if(!isAdm()){document.getElementById("mbc").innerHTML="<p style='text-align:center;color:#aaa;padding:40px'>관리자만 접근 가능합니다</p>";return;}
+  if(!pid||!isAdm())return;
+  var lnkBox="<div class='lnk-box' id='lnk-box' style='display:none'>"
+    +"<p>🔗 아래 링크를 복사해서 공유하세요 (7일간 유효)</p>"
+    +"<input class='lnk-txt' id='lnk-val' readonly>"
+    +"<button class='lnk-cp' onclick='copyInvLink()'>📋 링크 복사</button>"
+    +"</div>";
   db.ref("projects/"+pid+"/members").once("value",function(snap){
-    var ms=snap.val()||{},ekey=ek(cu.email);
+    var ms=snap.val()||{};
     var rows=Object.keys(ms).map(function(k){var m=ms[k];var email=m.email||ke(k);var isMe=k===ekey;var init=(m.name||email).charAt(0).toUpperCase();
-      return"<div class='mrow'>"+(m.photoURL&&m.photoURL!=="undefined"?"<img class='mav' src='"+esc(m.photoURL)+"'/>":"<div class='mavp'>"+init+"</div>")
-        +"<div class='mi'><div class='mn'>"+esc(m.name||email)+(isMe?" (나)":"")+"</div><div class='me'>"+esc(email)+"</div></div>"
+      return"<div class='mrow'>"
+        +(m.photoURL?"<img class='mav' src='"+esc(m.photoURL)+"'>":"<div class='mavp'>"+esc(init)+"</div>")
+        +"<div class='mi'><div class='mn'>"+esc(m.name||email)+(isMe?" <span style='font-size:10px;color:#aaa'>(나)</span>":"")+"</div><div class='me'>"+esc(email)+"</div></div>"
         +(isMe?"<span class='rb rb-"+m.role+"'>"+RKO[m.role]+"</span>"
-          :"<select class='rs' onchange='chRole(\""+k+"\",this.value)'>"+["admin","editor","viewer"].map(function(r){return"<option value='"+r+"'"+(m.role===r?" selected":"")+">"+RKO[r]+"</option>";}).join("")+"</select>"
-          +"<button class='rmb' onclick='rmMb(\""+k+"\")'>✕</button>")+"</div>";
+          :"<select class='rs' onchange='chRole(\""+k+"\",this.value)'>"
+            +["admin","editor","viewer"].map(function(r){return"<option value='"+r+"\'"+(m.role===r?" selected":"")+">"+RKO[r]+"</option>";}).join("")
+          +"</select>"
+          +"<button class='rmb' onclick='rmMb(\""+k+"\")'>✕</button>")
+        +"</div>";
     }).join("");
     db.ref("projects/"+pid+"/invites").once("value",function(is){
       var ivs=is.val()||{};
       var pr=Object.keys(ivs).map(function(k){return"<div class='pnd'><span>⏳ "+esc(ke(k))+"</span><button class='pndc' onclick='canInv(\""+k+"\")'>취소</button></div>";}).join("");
-      document.getElementById("mbc").innerHTML="<div class='mc'><div class='mh'>👥 멤버 관리</div>"+rows+(pr?"<div style='padding:8px 15px;font-size:11px;color:#aaa;border-top:1px dashed #f0d9b0;background:#fafafa'>초대 대기 중</div>"+pr:"")
-        +"<div class='iw'><div style='font-size:12px;font-weight:600;color:#555;margin-bottom:9px'>멤버 초대</div>"
+      document.getElementById("mbc").innerHTML=
+        "<div class='mc'><div class='mh'>👥 멤버 ("+Object.keys(ms).length+")</div>"+rows+(pr?"<div style='padding:8px 0 4px 15px;font-size:11px;color:#aaa'>초대 대기</div>"+pr:"")+"</div>"
+        +"<div class='mc'><div class='mh'>🔗 초대 링크 생성</div>"
+        +"<div class='iw'>"
+        +"<div class='rr'>"
+        +"<label><input type='radio' name='lnkr' value='editor' checked> "+RKO["editor"]+"</label>"
+        +"<label><input type='radio' name='lnkr' value='viewer'> "+RKO["viewer"]+"</label>"
+        +"</div>"
+        +"<button class='lnkb' onclick='genInvLink(document.querySelector(\"input[name=lnkr]:checked\").value)'>🔗 초대 링크 만들기</button>"
+        +lnkBox
+        +"</div></div>"
+        +"<div class='mc'><div class='mh'>📧 이메일로 초대</div>"
+        +"<div class='iw'>"
         +"<input class='ii' id='iie' type='email' placeholder='초대할 이메일 주소'/>"
-        +"<div class='rr'>"+["editor","viewer"].map(function(r){return"<label><input type='radio' name='ivr' value='"+r+"'"+(r==="editor"?" checked":"")+"> "+RKO[r]+"</label>";}).join("")+"</div>"
-        +"<button class='invb' onclick='invMb()'>초대 보내기</button></div></div>";
+        +"<div class='rr'>"
+        +"<label><input type='radio' name='ivr' value='editor' checked> "+RKO["editor"]+"</label>"
+        +"<label><input type='radio' name='ivr' value='viewer'> "+RKO["viewer"]+"</label>"
+        +"</div>"
+        +"<button class='invb' onclick='invMb()'>이메일 초대</button>"
+        +"</div></div>";
     });
   });
 }
+
 function chRole(k,r){db.ref("projects/"+pid+"/members/"+k+"/role").set(r);showToast("권한 변경됨 ✓");}
 function rmMb(k){if(!confirm("멤버를 제거할까요?"))return;db.ref("projects/"+pid+"/members/"+k).remove();showToast("멤버 제거됨");setTimeout(renMb,400);}
 function invMb(){var email=(document.getElementById("iie").value||"").trim().toLowerCase();if(!email||!email.includes("@")){showToast("올바른 이메일을 입력하세요");return;}var r=document.querySelector("input[name='ivr']:checked");var role=r?r.value:"editor";var k=ek(email);db.ref("projects/"+pid+"/members/"+k).set({email:email,role:role,name:email,photoURL:""});db.ref("projects/"+pid+"/invites/"+k).set({email:email,role:role,invitedBy:cu.email,at:ts()});showToast("초대 완료 ✓ — 상대방이 로그인하면 자동 합류");document.getElementById("iie").value="";setTimeout(renMb,600);}
 function canInv(k){db.ref("projects/"+pid+"/invites/"+k).remove();db.ref("projects/"+pid+"/members/"+k).remove();showToast("초대 취소됨");setTimeout(renMb,400);}
-function openNP(){se="📋";snc="#C8860A";document.getElementById("npname").value="";document.getElementById("emrow").innerHTML=EMOJIS.map(function(e){return"<div class='eo"+(e==="📋"?" sl":"")+"' onclick='se=\""+e+"\";document.querySelectorAll(\".eo\").forEach(function(el){el.classList.toggle(\"sl\",el.textContent.trim()===se);})'>"+e+"</div>";}).join("");document.getElementById("colrow").innerHTML=COLORS.map(function(col){return"<div class='co"+(col===snc?" sl":"")+"' style='background:"+col+"' onclick='snc=\""+col+"\";document.querySelectorAll(\".co\").forEach(function(el){el.classList.toggle(\"sl\",el.style.background===snc);});'></div>";}).join("");document.getElementById("npmodal").classList.add("open");setTimeout(function(){document.getElementById("npname").focus();},60);}
+
+function openNP(){se="📋";snc="#C8860A";document.getElementById("npname").value="";document.getElementById("emrow").innerHTML=EMOJIS.map(function(e){return"<div class='eo"+(e==="📋"?" sl":"")+"' onclick='se=\""+e+"\";document.querySelectorAll(\".eo\").forEach(function(el){el.classList.toggle(\"sl\",el.textContent.trim()===se);})'>" +e+"</div>";}).join("");document.getElementById("colrow").innerHTML=COLORS.map(function(col){return"<div class='co"+(col===snc?" sl":"")+"' style='background:"+col+"' onclick='snc=\""+col+"\";document.querySelectorAll(\".co\").forEach(function(el){el.classList.toggle(\"sl\",el.style.background===snc);});'></div>";}).join("");document.getElementById("npmodal").classList.add("open");setTimeout(function(){document.getElementById("npname").focus();},60);}
 function clNP(){document.getElementById("npmodal").classList.remove("open");}
-function crProj(){var n=document.getElementById("npname").value.trim();if(!n){showToast("프로젝트 이름을 입력하세요");return;}var k=uid();var ekey=ek(cu.email);var ms={};ms[ekey]={email:cu.email,name:cu.displayName||cu.email,photoURL:cu.photoURL||"",role:"admin"};var p={id:k,name:n,emoji:se,color:snc,createdAt:ts(),createdBy:cu.email,members:ms,sections:[{id:uid(),title:"📅 할 일",color:snc,items:[]},{id:uid(),title:"✅ 완료",color:"#556B2F",items:[]}],notes:""};db.ref("projects/"+k).set(p,function(e){if(!e){showToast("프로젝트 생성됨 ✓");clNP();}else showToast("오류: "+(e.message||""));});}
+function crProj(){var n=document.getElementById("npname").value.trim();if(!n){showToast("프로젝트 이름을 입력하세요");return;}var k=uid();var ekey2=ek(cu.email);var ms={};ms[ekey2]={email:cu.email,name:cu.displayName||cu.email,photoURL:cu.photoURL||"",role:"admin"};var p={id:k,name:n,emoji:se,color:snc,createdAt:ts(),createdBy:cu.email,members:ms,sections:[{id:uid(),title:"📅 할 일",color:snc,items:[]},{id:uid(),title:"✅ 완료",color:"#556B2F",items:[]}],notes:""};db.ref("projects/"+k).set(p,function(e){if(!e){showToast("프로젝트 생성됨 ✓");clNP();}else showToast("오류: "+(e.message||""));});}
 function edProj(k){db.ref("projects/"+k+"/name").once("value",function(snap){document.getElementById("mtt").textContent="프로젝트 이름 변경";document.getElementById("minp").value=snap.val()||"";document.getElementById("cwrap").style.display="none";mcb=function(){var t=document.getElementById("minp").value.trim();if(t)db.ref("projects/"+k+"/name").set(t);clModal();showToast("이름 변경됨 ✓");};opModal();});}
 function delProj(k){if(!confirm("프로젝트를 삭제할까요? 모든 데이터가 삭제됩니다."))return;db.ref("projects/"+k).remove();showToast("프로젝트 삭제됨");}
+
 function opHist(sid,iid){var s=secs.find(function(s){return s&&s.id===sid;});var it=findIt(sid,iid);if(!it)return;document.getElementById("htin").textContent=it.text;document.getElementById("hse").textContent=s?s.title:"";var hist=it.history||[];document.getElementById("hby").innerHTML=!hist.length?"<div class='hem'>아직 변경 이력이 없어요</div>":hist.map(function(h){var dot="#C8860A",ac="";if(h.type==="check"){dot=h.value?"#556B2F":"#aaa";ac=h.value?"✅ 완료로 변경":"☐ 미완료로 변경";}else if(h.type==="assignee"){dot="#2B6CB0";ac="👤 담당자: "+(h.prev||"없음")+" → "+(h.value||"없음");}else if(h.type==="cost"){dot="#8B4513";ac="💴 비용: "+(h.prev?fmt(h.prev)+"원":"없음")+" → "+(h.value?fmt(h.value)+"원":"없음");}else if(h.type==="add"){dot="#556B2F";ac="➕ 항목 추가됨";}else if(h.type==="edit"){dot="#6B46C1";ac="✏️ 항목명 수정: "+esc(h.value);}return"<div class='hen'><div class='hdt' style='background:"+dot+"'></div><div><div class='hac'>"+ac+"</div><div class='hmt'><span class='hwh'>"+esc(h.who)+"</span> · "+esc(h.at)+"</div></div></div>";}).join("");document.getElementById("hov").classList.add("open");}
 function clHist(){document.getElementById("hov").classList.remove("open");}
 </script>
