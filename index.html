@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🎊 팔순 산수연 체크리스트</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+<!-- Firebase compat (전역 window.firebase 방식 — 모듈 없이 동작) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fdf6ec 0%, #fce8c3 55%, #f5d6a0 100%);
+}
+header {
+  background: linear-gradient(135deg, #8B1A1A, #C8860A);
+  padding: 22px 18px 18px; text-align: center;
+  box-shadow: 0 4px 20px rgba(139,26,26,0.3);
+}
+.sub { font-size: 11px; color: #fce8c3; letter-spacing: 4px; margin-bottom: 4px; }
+h1 { color: #fff; font-size: clamp(18px,5vw,26px); font-weight: 700; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.prog-wrap { margin-top: 10px; background: rgba(255,255,255,0.15); border-radius: 20px; padding: 7px 18px; display: inline-block; }
+.prog-label { color: #fff; font-size: 12px; margin-bottom: 4px; }
+.prog-bar { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; width: 180px; }
+.prog-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#fce8c3,#fff); transition: width .4s; }
+.prog-pct { color: #fce8c3; font-size: 11px; margin-top: 3px; }
+.last-saved { color: rgba(255,255,255,0.5); font-size: 10px; margin-top: 4px; min-height: 14px; }
+#setup-banner {
+  background: #fff3cd; border: 2px solid #ffc107; border-radius: 12px;
+  padding: 14px 16px; margin: 14px 12px; font-size: 12px; color: #856404; line-height: 1.8; display: none;
+}
+#setup-banner code { background: #ffe082; padding: 1px 5px; border-radius: 4px; }
+.tabs {
+  display: flex; background: #fff; border-bottom: 2px solid #f0d9b0;
+  position: sticky; top: 0; z-index: 40; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.tab-btn {
+  flex: 1; padding: 12px 6px; border: none; cursor: pointer;
+  font-size: clamp(11px,3vw,13px); font-weight: 400; transition: all .2s;
+  font-family: inherit; color: #999; background: #fff;
+}
+.tab-btn.active { background: linear-gradient(135deg,#8B1A1A,#C8860A); color: #fff; font-weight: 700; }
+main { max-width: 640px; margin: 0 auto; padding: 14px 12px 90px; }
+.edit-bar { display: flex; justify-content: flex-end; margin-bottom: 11px; }
+.edit-btn {
+  padding: 7px 15px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  cursor: pointer; font-family: inherit; border: 2px solid #e0c898; background: #fff; color: #8B4513;
+}
+.edit-btn.on { border-color: #8B1A1A; background: #8B1A1A; color: #fff; }
+.hint { background: rgba(255,255,255,0.72); border-radius: 9px; padding: 9px 13px; margin-bottom: 13px; border: 1px solid #f0d9b0; font-size: 12px; color: #8B4513; }
+.sec-card { background: rgba(255,255,255,0.91); border-radius: 14px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 3px 14px rgba(0,0,0,0.06); }
+.sec-hd { padding: 11px 14px; display: flex; align-items: center; gap: 8px; }
+.sec-title { font-weight: 700; font-size: 13px; flex: 1; }
+.sec-badge { color: #fff; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 600; }
+.sec-edit-btns { display: none; gap: 3px; }
+.item-row { display: flex; align-items: flex-start; padding: 9px 13px; gap: 9px; border-bottom: 1px solid #f5e8d0; }
+.item-row:last-of-type { border-bottom: none; }
+.chk {
+  width: 21px; height: 21px; min-width: 21px; border-radius: 5px;
+  border: 2px solid #ccc; background: #fff; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; transition: all .2s; margin-top: 2px; flex-shrink: 0;
+}
+.chk svg { display: none; }
+.chk.on svg { display: block; }
+.item-body { flex: 1; min-width: 0; }
+.item-text { font-size: 13px; line-height: 1.55; color: #444; display: block; }
+.item-text.done { color: #bbb; text-decoration: line-through; }
+.assignee-row { display: flex; align-items: center; gap: 4px; margin-top: 3px; }
+.assignee-icon { font-size: 11px; }
+.assignee-inp {
+  font-size: 11px; border: none; border-bottom: 1px solid #ddd;
+  background: transparent; outline: none; width: 82px;
+  font-family: inherit; padding: 1px 2px; color: #bbb;
+}
+.assignee-inp.has { font-weight: 600; }
+.item-btns { display: none; gap: 3px; flex-shrink: 0; }
+.meta-row { display: flex; align-items: center; gap: 12px; margin-top: 3px; flex-wrap: wrap; }
+.cost-wrap { display: flex; align-items: center; gap: 3px; }
+.cost-inp {
+  font-size: 11px; border: none; border-bottom: 1px solid #ddd;
+  background: transparent; outline: none; width: 72px; text-align: right;
+  font-family: inherit; padding: 1px 2px; color: #bbb;
+}
+.cost-inp.has { font-weight: 600; color: #556B2F; border-bottom-color: #556B2F; }
+.cost-unit { font-size: 10px; color: #999; margin-left: 1px; }
+.sec-cost-badge { font-size: 10px; color: #fff; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 1px 7px; }
+.budget-card { background: rgba(255,255,255,0.91); border-radius: 14px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 3px 14px rgba(0,0,0,0.06); border: 2px solid #C8860A33; }
+.budget-sec-hd { padding: 11px 16px; font-weight: 700; font-size: 13px; border-bottom: 1px solid #f0d9b0; }
+.budget-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; border-bottom: 1px solid #f5e8d0; font-size: 13px; }
+.budget-row:last-of-type { border-bottom: none; }
+.budget-item-name { color: #555; flex: 1; }
+.budget-item-done { color: #bbb; text-decoration: line-through; }
+.budget-item-cost { font-weight: 600; color: #556B2F; }
+.budget-item-none { color: #ddd; font-size: 11px; }
+.budget-assignee { font-size: 11px; color: #aaa; margin-left: 8px; }
+.budget-sec-total { padding: 9px 16px; background: rgba(200,134,10,0.07); display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #C8860A; border-top: 1px dashed #e0c898; }
+.grand-total-bar { background: linear-gradient(135deg,#8B1A1A,#C8860A); border-radius: 14px; padding: 16px 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 16px rgba(139,26,26,0.25); }
+.grand-total-label { color: rgba(255,255,255,0.85); font-size: 13px; }
+.grand-total-amount { color: #fff; font-size: 20px; font-weight: 700; }
+.grand-total-sub { color: rgba(255,255,255,0.7); font-size: 11px; margin-top: 2px; }
+.icon-btn {
+  width: 26px; height: 26px; border: none; border-radius: 6px;
+  background: transparent; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 13px; padding: 0;
+}
+.add-row { display: none; gap: 7px; padding: 9px 13px; border-top: 1px dashed #e0d0b0; }
+.add-inp { flex: 1; border: 1.5px solid #e0c898; border-radius: 7px; padding: 6px 9px; font-size: 12px; font-family: inherit; background: #fffef8; outline: none; color: #444; }
+.add-btn { padding: 6px 12px; color: #fff; border: none; border-radius: 7px; font-weight: 700; cursor: pointer; font-size: 12px; font-family: inherit; }
+.add-sec-btn {
+  width: 100%; padding: 13px; background: rgba(255,255,255,0.7);
+  border: 2px dashed #C8860A; border-radius: 13px; color: #C8860A;
+  font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; display: none; margin-top: 4px;
+}
+/* edit mode */
+body.edit .sec-edit-btns { display: flex; }
+body.edit .item-btns { display: flex; }
+body.edit .add-row { display: flex; }
+body.edit .add-sec-btn { display: block; }
+/* notes */
+.notes-card { background: rgba(255,255,255,0.91); border-radius: 14px; overflow: hidden; border: 2px solid #f0d9b0; box-shadow: 0 3px 14px rgba(0,0,0,0.06); }
+.notes-hd { background: linear-gradient(135deg,#556B2F22,#556B2F0a); padding: 12px 16px; border-bottom: 1px solid #f0d9b0; font-weight: 700; font-size: 13px; color: #556B2F; }
+.notes-ta { width: 100%; min-height: 280px; padding: 14px 16px; border: none; resize: vertical; font-size: 13px; line-height: 1.9; color: #444; background: transparent; font-family: inherit; outline: none; }
+.save-btn { margin-top: 12px; width: 100%; padding: 13px; background: linear-gradient(135deg,#556B2F,#8B9E4A); color: #fff; border: none; border-radius: 11px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+/* modal */
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+.modal-bg.open { display: flex; }
+.modal-box { background: #fff; border-radius: 18px; padding: 22px 20px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); }
+.modal-ttl { font-size: 15px; color: #333; margin-bottom: 13px; font-weight: 700; }
+.modal-inp { width: 100%; padding: 9px 11px; border: 1.5px solid #e0c898; border-radius: 9px; font-size: 13px; font-family: inherit; outline: none; margin-bottom: 12px; color: #333; }
+.color-lbl { font-size: 11px; color: #888; margin-bottom: 7px; }
+.color-dots { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+.cdot { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border .15s; }
+.cdot.sel { border-color: #333; }
+.modal-row { display: flex; gap: 8px; }
+.m-cancel { flex: 1; padding: 9px; border: 1.5px solid #e0c898; border-radius: 9px; background: #fff; color: #888; font-weight: 600; cursor: pointer; font-family: inherit; }
+.m-save { flex: 1; padding: 9px; background: linear-gradient(135deg,#8B1A1A,#C8860A); border: none; border-radius: 9px; color: #fff; font-weight: 700; cursor: pointer; font-family: inherit; }
+/* toast */
+#toast { display: none; position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); background: rgba(35,35,35,0.92); color: #fff; padding: 10px 20px; border-radius: 22px; font-size: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.25); z-index: 300; white-space: nowrap; }
+#toast.show { display: block; animation: fu .2s ease; }
+@keyframes fu { from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="sub">🎊 &nbsp; 산수연 준비 &nbsp; 🎊</div>
+  <h1>팔순 체크리스트</h1>
+  <div class="prog-wrap">
+    <div class="prog-label" id="prog-label">전체 진행률 &nbsp;<strong>0/0</strong> 완료</div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    <div class="prog-pct" id="prog-pct">0%</div>
+  </div>
+  <div class="last-saved" id="last-saved"></div>
+</header>
+
+<div id="setup-banner">
+  ⚠️ <strong>Firebase 설정 필요</strong> — 지금은 이 기기에만 저장됩니다.<br>
+  파일 하단 <code>firebaseConfig</code> 에 Firebase Console 값을 붙여넣고 재배포하세요.
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="setTab('checklist')">✅ 체크리스트</button>
+  <button class="tab-btn"        onclick="setTab('budget')">💰 예산</button>
+  <button class="tab-btn"        onclick="setTab('notes')">📝 메모</button>
+</div>
+
+<main>
+  <div id="tab-cl">
+    <div class="edit-bar">
+      <button class="edit-btn" id="edit-btn" onclick="toggleEdit()">✏️ 편집 모드</button>
+    </div>
+    <div class="hint" id="hint">💡 체크 시 자동 저장 · 담당자·비용 입력 후 다른 곳 터치 시 저장</div>
+    <div id="secs"></div>
+    <button class="add-sec-btn" onclick="addSection()">+ 새 섹션 추가</button>
+  </div>
+  <div id="tab-budget" style="display:none">
+    <div id="budget-content"></div>
+  </div>
+  <div id="tab-notes" style="display:none">
+    <div class="notes-card">
+      <div class="notes-hd">📝 공유 메모</div>
+      <textarea class="notes-ta" id="notes-ta"
+        placeholder="가족 모두가 볼 수 있는 메모&#10;&#10;예) 어머니 한복 색상: 분홍&#10;예) 식당 연락처: 010-xxxx-xxxx"
+        oninput="notesChanged=true"></textarea>
+    </div>
+    <button class="save-btn" onclick="saveNotes()">메모 저장</button>
+  </div>
+</main>
+
+<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-ttl" id="modal-ttl">편집</div>
+    <input class="modal-inp" id="modal-inp" onkeydown="if(event.key==='Enter')doSave()"/>
+    <div id="color-wrap">
+      <div class="color-lbl">색상 선택</div>
+      <div class="color-dots" id="cdots"></div>
+    </div>
+    <div class="modal-row">
+      <button class="m-cancel" onclick="closeModal()">취소</button>
+      <button class="m-save"   onclick="doSave()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// =====================================================================
+// 🔧 Firebase 설정 — Firebase Console > 프로젝트 설정 > 앱 > firebaseConfig
+// =====================================================================
+var firebaseConfig = {
+  apiKey:            "AIzaSyBBzjdn8aWrkiMsLsdDqjZUZH_04rfbG1g",
+  authDomain:        "sansooyeon-a0cbc.firebaseapp.com",
+  databaseURL:       "https://sansooyeon-a0cbc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "sansooyeon-a0cbc",
+  storageBucket:     "sansooyeon-a0cbc.firebasestorage.app",
+  messagingSenderId: "639914165790",
+  appId:             "1:639914165790:web:54acfa4fc6b5fa6bc9500f"
+};
+// =====================================================================
+
+var COLORS = ["#C8860A","#8B4513","#556B2F","#8B1A1A","#4A5568","#2B6CB0","#6B46C1","#B7791F"];
+var LS_SECS  = "ss_secs";
+var LS_NOTES = "ss_notes";
+
+var INIT = [
+  { id:"s1", title:"📅 D-3주 ~ D-2주", color:"#C8860A", items:[
+    {id:"i1",  text:"행사 날짜·시간 확정",                done:false, assignee:""},
+    {id:"i2",  text:"예상 인원 파악 (가족, 친지, 지인 등)", done:false, assignee:""},
+    {id:"i3",  text:"식당/연회장 후보 선정 및 견적 문의",   done:false, assignee:""},
+    {id:"i4",  text:"장소 예약 완료 (계약금 입금)",         done:false, assignee:""},
+    {id:"i5",  text:"초대 대상자 리스트 작성",              done:false, assignee:""},
+    {id:"i6",  text:"초대장 발송 (카톡/문자/우편)",         done:false, assignee:""},
+    {id:"i7",  text:"메뉴 구성 협의 (한정식/코스/뷔페)",    done:false, assignee:""},
+    {id:"i8",  text:"주인공(어르신) 한복 또는 예복 준비",   done:false, assignee:""},
+    {id:"i9",  text:"사회자 섭외 (가족 중 또는 외부)",      done:false, assignee:""},
+  ]},
+  { id:"s2", title:"🎀 D-1주", color:"#8B4513", items:[
+    {id:"i10", text:"참석 인원 최종 확인 및 식당에 통보",              done:false, assignee:""},
+    {id:"i11", text:"케이크 주문",                                     done:false, assignee:""},
+    {id:"i12", text:"수연례 순서 기획 (헌수, 절, 덕담, 기념사진 등)",  done:false, assignee:""},
+    {id:"i13", text:"포토존 소품 준비 (현수막, 꽃장식, 포토프레임)",   done:false, assignee:""},
+    {id:"i14", text:"영상/슬라이드 제작 (어르신 사진 모음, 가족사진)", done:false, assignee:""},
+    {id:"i15", text:"답례품 준비 (한과, 홍삼, 기념품 등)",             done:false, assignee:""},
+    {id:"i16", text:"축의금 봉투·방명록 준비",                         done:false, assignee:""},
+    {id:"i17", text:"사진작가 또는 스냅 예약",                         done:false, assignee:""},
+  ]},
+  { id:"s3", title:"📸 D-3일", color:"#556B2F", items:[
+    {id:"i18", text:"행사 순서(타임라인) 확정",                                      done:false, assignee:""},
+    {id:"i19", text:"식당 측 최종 미팅 (음향, 빔프로젝터, 케이크 반입, 좌석 배치)", done:false, assignee:""},
+    {id:"i20", text:"영상/슬라이드 최종 점검",                                       done:false, assignee:""},
+    {id:"i21", text:"현수막 문구 확인 및 수령",                                      done:false, assignee:""},
+    {id:"i22", text:"가족 역할 분담 확인 (사회, 헌수, 접객, 사진 등)",               done:false, assignee:""},
+  ]},
+  { id:"s4", title:"🌅 D-Day", color:"#8B1A1A", items:[
+    {id:"i23", text:"어르신 한복/예복 착장",                     done:false, assignee:""},
+    {id:"i24", text:"가족 단체 옷차림 맞춤 (색동/한복/정장 등)", done:false, assignee:""},
+    {id:"i25", text:"포토존·소품 세팅",                          done:false, assignee:""},
+    {id:"i26", text:"케이크·꽃다발 수령 및 반입",                done:false, assignee:""},
+    {id:"i27", text:"방명록·축의금 테이블 세팅",                 done:false, assignee:""},
+    {id:"i28", text:"사진작가 도착 확인",                         done:false, assignee:""},
+    {id:"i29", text:"행사 순서 가족 전달",                        done:false, assignee:""},
+  ]},
+];
+
+// State
+var sections = JSON.parse(JSON.stringify(INIT));
+var notesVal = "";
+var notesChanged = false;
+var editMode = false;
+var modalCb = null;
+var selColor = COLORS[0];
+var configOk = false;
+var dbRef, notesDbRef;
+var ctr = 100;
+function uid(){ return "x"+(++ctr)+"_"+Date.now(); }
+
+// Firebase init
+if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
+  try{
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.database();
+    dbRef = db.ref("sansooyeon/sections");
+    notesDbRef = db.ref("sansooyeon/notes");
+    configOk = true;
+
+    dbRef.on("value", function(snap){
+      if(snap.exists()){ sections = snap.val(); render(); }
+      else { dbRef.set(sections); }
+    });
+    notesDbRef.on("value", function(snap){
+      if(snap.exists()){
+        notesVal = snap.val();
+        var ta = document.getElementById("notes-ta");
+        if(ta && document.activeElement !== ta) ta.value = notesVal;
+      }
+    });
+  }catch(e){ console.error(e); }
+} else {
+  document.getElementById("setup-banner").style.display = "block";
+  try{ var d=localStorage.getItem(LS_SECS); if(d) sections=JSON.parse(d); }catch(e){}
+  try{ notesVal=localStorage.getItem(LS_NOTES)||""; }catch(e){}
+}
+
+function saveSections(){
+  if(configOk){ dbRef.set(sections); }
+  else{ try{localStorage.setItem(LS_SECS,JSON.stringify(sections));}catch(e){} }
+  document.getElementById("last-saved").textContent = "저장: "+new Date().toLocaleTimeString("ko-KR");
+}
+function saveNotes(){
+  notesVal = document.getElementById("notes-ta").value;
+  if(configOk){ notesDbRef.set(notesVal); }
+  else{ try{localStorage.setItem(LS_NOTES,notesVal);}catch(e){} }
+  showToast("메모 저장 완료 ✓");
+  notesChanged = false;
+}
+
+// Render
+function render(){
+  updateProg();
+  renderSecs();
+}
+function updateProg(){
+  var all=sections.flatMap(function(s){return s.items;});
+  var total=all.length, done=all.filter(function(i){return i.done;}).length;
+  var pct=total?Math.round(done/total*100):0;
+  document.getElementById("prog-label").innerHTML="전체 진행률 &nbsp;<strong>"+done+"/"+total+"</strong> 완료";
+  document.getElementById("prog-fill").style.width=pct+"%";
+  document.getElementById("prog-pct").textContent=pct+"%";
+}
+function e(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function renderSecs(){
+  var html = sections.map(function(sec){
+    var secDone=sec.items.filter(function(i){return i.done;}).length;
+    var secCost=sec.items.reduce(function(a,i){return a+Number(i.cost||0);},0);
+    var items = sec.items.map(function(it,idx){
+      var last = idx===sec.items.length-1 ? "style='border-bottom:none'" : "";
+      var doneRow = it.done ? "style='background:"+sec.color+"09'" : "";
+      return "<div class='item-row' "+doneRow+" "+last+">"
+        +"<div class='chk"+(it.done?" on":"")+"' "
+        +"style='border-color:"+(it.done?sec.color:"#ccc")+";background:"+(it.done?sec.color:"#fff")+"' "
+        +"onclick='toggleItem(\""+sec.id+"\",\""+it.id+"\")'>"
+        +"<svg width='11' height='8' viewBox='0 0 11 8' fill='none'><path d='M1 4L4 7L10 1' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"
+        +"</div>"
+        +"<div class='item-body'>"
+        +"<span class='item-text"+(it.done?" done":"")+"'>"+e(it.text)+"</span>"
+        +"<div class='meta-row'>"
+        +"<span style='color:"+(it.assignee?sec.color:"#ccc")+";font-size:11px'>&#128100;</span>"
+        +"<input class='assignee-inp"+(it.assignee?" has":"")+"' "
+        +"style='border-bottom-color:"+(it.assignee?sec.color:"#ddd")+";color:"+(it.assignee?sec.color:"#bbb")+"' "
+        +"placeholder='담당자' value='"+e(it.assignee)+"' "
+        +"oninput='updateAssignee(\""+ sec.id+"\",\""+it.id+"\",this.value)' "
+        +"onblur='saveSections()'/>"
+        +"<div class='cost-wrap'>"
+        +"<span style='font-size:11px;color:"+(it.cost?"#556B2F":"#ccc")+"'>&#128181;</span>"
+        +"<input class='cost-inp"+(it.cost?" has":"")+"' type='text' inputmode='numeric' "
+        +"placeholder='비용' value='"+(it.cost?fmt(it.cost):"")+"' "
+        +"oninput='updateCost(\""+ sec.id+"\",\""+it.id+"\",this.value)' "
+        +"onblur='saveSections()'/>"
+        +"<span class='cost-unit'>원</span>"
+        +"</div>"
+        +"</div>"
+        +"</div>"
+        +"<div class='item-btns'>"
+        +"<button class='icon-btn' style='color:"+sec.color+"' onclick='openEditItem(\""+sec.id+"\",\""+it.id+"\")'>✏️</button>"
+        +"<button class='icon-btn' style='color:#cc3333' onclick='delItem(\""+sec.id+"\",\""+it.id+"\")'>🗑️</button>"
+        +"</div>"
+        +"</div>";
+    }).join("");
+
+    return "<div class='sec-card' style='border:2px solid "+sec.color+"33'>"
+      +"<div class='sec-hd' style='background:linear-gradient(135deg,"+sec.color+"22,"+sec.color+"0a);border-bottom:1px solid "+sec.color+"22'>"
+      +"<span class='sec-title' style='color:"+sec.color+"'>"+e(sec.title)+"</span>"
+      +"<span class='sec-badge' style='background:"+sec.color+"'>"+secDone+"/"+sec.items.length+"</span>"
+      +(secCost>0?"<span class='sec-cost-badge'>"+fmt(secCost)+"원</span>":"")
+      +"<div class='sec-edit-btns'>"
+      +"<button class='icon-btn' style='color:"+sec.color+"' onclick='openEditSec(\""+sec.id+"\")'>✏️</button>"
+      +"<button class='icon-btn' style='color:#cc3333' onclick='delSec(\""+sec.id+"\")'>🗑️</button>"
+      +"</div>"
+      +"</div>"
+      +items
+      +"<div class='add-row' style='background:"+sec.color+"05'>"
+      +"<input class='add-inp' id='ni_"+sec.id+"' placeholder='+ 새 항목 추가 후 Enter' onkeydown='if(event.key===\"Enter\")addItem(\""+sec.id+"\")'/>"
+      +"<button class='add-btn' style='background:"+sec.color+"' onclick='addItem(\""+sec.id+"\")'>추가</button>"
+      +"</div>"
+      +"</div>";
+  }).join("");
+  document.getElementById("secs").innerHTML = html;
+}
+
+// Actions
+function toggleItem(sid,iid){
+  var it=sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;});
+  it.done=!it.done;
+  saveSections(); render();
+}
+function updateAssignee(sid,iid,v){
+  sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;}).assignee=v;
+}
+function updateCost(sid,iid,v){
+  var raw=v.replace(/[^0-9]/g,"");
+  sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;}).cost=raw;
+}
+function fmt(n){ return Number(n||0).toLocaleString("ko-KR"); }
+function delItem(sid,iid){
+  var sec=sections.find(function(s){return s.id===sid;});
+  sec.items=sec.items.filter(function(i){return i.id!==iid;});
+  saveSections(); render();
+}
+function addItem(sid){
+  var inp=document.getElementById("ni_"+sid);
+  var txt=inp.value.trim(); if(!txt)return;
+  sections.find(function(s){return s.id===sid;}).items.push({id:uid(),text:txt,done:false,assignee:"",cost:""});
+  inp.value="";
+  saveSections(); render();
+}
+function delSec(sid){
+  if(!confirm("섹션을 삭제할까요? 항목도 모두 삭제됩니다."))return;
+  sections=sections.filter(function(s){return s.id!==sid;});
+  saveSections(); render();
+}
+function addSection(){
+  sections.push({id:uid(),title:"새 섹션",color:COLORS[sections.length%COLORS.length],items:[]});
+  saveSections(); render();
+}
+function setTab(t){
+  document.getElementById("tab-cl").style.display     = t==="checklist"?"":"none";
+  document.getElementById("tab-budget").style.display = t==="budget"?"":"none";
+  document.getElementById("tab-notes").style.display  = t==="notes"?"":"none";
+  document.querySelectorAll(".tab-btn").forEach(function(b,i){
+    b.classList.toggle("active",["checklist","budget","notes"][i]===t);
+  });
+  if(t==="notes") document.getElementById("notes-ta").value=notesVal;
+  if(t==="budget") renderBudget();
+}
+function renderBudget(){
+  var grandTotal=0;
+  var html="";
+  sections.forEach(function(sec){
+    var withCost=sec.items.filter(function(i){return i.cost&&Number(i.cost)>0;});
+    var secTotal=sec.items.reduce(function(a,i){return a+Number(i.cost||0);},0);
+    grandTotal+=secTotal;
+    var rows=sec.items.map(function(it){
+      var hasCost=it.cost&&Number(it.cost)>0;
+      return "<div class='budget-row'>"
+        +"<span class='budget-item-name"+(it.done?" budget-item-done":"")+"'>"+e(it.text)+"</span>"
+        +(it.assignee?"<span class='budget-assignee'>👤 "+e(it.assignee)+"</span>":"")
+        +(hasCost?"<span class='budget-item-cost'>"+fmt(it.cost)+"원</span>"
+                 :"<span class='budget-item-none'>미입력</span>")
+        +"</div>";
+    }).join("");
+    html+="<div class='budget-card'>"
+      +"<div class='budget-sec-hd' style='color:"+sec.color+";background:linear-gradient(135deg,"+sec.color+"18,"+sec.color+"08)'>"+e(sec.title)+"</div>"
+      +rows
+      +(secTotal>0?"<div class='budget-sec-total'><span>소계</span><span>"+fmt(secTotal)+"원</span></div>":"")
+      +"</div>";
+  });
+  var summary="<div class='grand-total-bar'>"
+    +"<div><div class='grand-total-label'>💰 총 예상 비용</div>"
+    +"<div class='grand-total-sub'>입력된 항목 기준</div></div>"
+    +"<div class='grand-total-amount'>"+fmt(grandTotal)+"원</div>"
+    +"</div>";
+  document.getElementById("budget-content").innerHTML=summary+html;
+}
+function toggleEdit(){
+  editMode=!editMode;
+  document.body.classList.toggle("edit",editMode);
+  var btn=document.getElementById("edit-btn");
+  btn.textContent=editMode?"✔ 편집 완료":"✏️ 편집 모드";
+  btn.classList.toggle("on",editMode);
+  document.getElementById("hint").textContent=editMode
+    ?"✏️ 항목 수정·삭제, 담당자 입력, 섹션 추가·편집 가능"
+    :"💡 체크 시 자동 저장 · 담당자·비용 입력 후 다른 곳 터치 시 저장";
+}
+
+// Modal
+function openEditItem(sid,iid){
+  var it=sections.find(function(s){return s.id===sid;}).items.find(function(i){return i.id===iid;});
+  document.getElementById("modal-ttl").textContent="항목 텍스트 편집";
+  document.getElementById("modal-inp").value=it.text;
+  document.getElementById("color-wrap").style.display="none";
+  modalCb=function(){
+    var t=document.getElementById("modal-inp").value.trim();
+    if(t)it.text=t;
+    saveSections(); render(); closeModal();
+  };
+  document.getElementById("modal").classList.add("open");
+  setTimeout(function(){document.getElementById("modal-inp").focus();},60);
+}
+function openEditSec(sid){
+  var sec=sections.find(function(s){return s.id===sid;});
+  document.getElementById("modal-ttl").textContent="섹션 편집";
+  document.getElementById("modal-inp").value=sec.title;
+  document.getElementById("color-wrap").style.display="block";
+  selColor=sec.color;
+  renderCdots();
+  modalCb=function(){
+    var t=document.getElementById("modal-inp").value.trim();
+    if(t)sec.title=t;
+    sec.color=selColor;
+    saveSections(); render(); closeModal();
+  };
+  document.getElementById("modal").classList.add("open");
+  setTimeout(function(){document.getElementById("modal-inp").focus();},60);
+}
+function renderCdots(){
+  document.getElementById("cdots").innerHTML=COLORS.map(function(c){
+    return "<div class='cdot"+(c===selColor?" sel":"")+"' style='background:"+c+"' onclick='pickColor(\""+c+"\")''></div>";
+  }).join("");
+}
+function pickColor(c){ selColor=c; renderCdots(); }
+function doSave(){ if(modalCb)modalCb(); }
+function closeModal(){ document.getElementById("modal").classList.remove("open"); }
+
+// Toast
+function showToast(msg){
+  var t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  setTimeout(function(){t.classList.remove("show");},2200);
+}
+
+// Init
+render();
+</script>
+</body>
+</html>
