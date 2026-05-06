@@ -355,6 +355,9 @@ if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
     notesDbRef = db.ref("sansooyeon/notes");
     configOk = true;
 
+    // Handle redirect result (카카오톡 인앱 브라우저 등)
+    auth.getRedirectResult().catch(function(e){ console.error("redirect error:", e); });
+
     // Auth state
     auth.onAuthStateChanged(function(user){
       if(user){
@@ -394,7 +397,17 @@ if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
 
 function signInGoogle(){
   var provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(function(e){ alert("로그인 실패: "+e.message); });
+  // 카카오톡 등 인앱 브라우저 감지 시 redirect 방식 사용
+  var ua = navigator.userAgent.toLowerCase();
+  var isInApp = /kakaotalk|instagram|fban|fbav|naver|line|wechat|micromessenger/.test(ua);
+  if(isInApp){
+    auth.signInWithRedirect(provider).catch(function(e){ alert("로그인 실패: "+e.message); });
+  } else {
+    auth.signInWithPopup(provider).catch(function(e){
+      // 팝업 실패 시 redirect로 폴백
+      auth.signInWithRedirect(provider).catch(function(e2){ alert("로그인 실패: "+e2.message); });
+    });
+  }
 }
 function signOut(){
   auth.signOut();
