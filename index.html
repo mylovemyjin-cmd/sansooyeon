@@ -201,6 +201,12 @@ body.em .ibtns{display:flex!important;}
 .inv-no{flex:1;padding:9px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:9px;font-size:13px;cursor:pointer;}
 #toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(35,35,35,.92);color:#fff;padding:10px 20px;border-radius:22px;font-size:12px;box-shadow:0 4px 18px rgba(0,0,0,.25);z-index:600;white-space:nowrap;}
 #toast.show{display:block;animation:fu .2s ease;}
+/* 유저 검색 목록 */
+.usr-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f5f5f5;}
+.usr-row:last-child{border-bottom:none;}
+.add-mb-btn{padding:5px 10px;background:linear-gradient(135deg,var(--bl),#4A90D9);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.uempty{text-align:center;color:#ccc;font-size:12px;padding:14px 0;}
+
 @keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(6px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 </style>
 </head>
@@ -446,6 +452,13 @@ window.onload=function(){
       document.getElementById("app").classList.add("show");
       document.getElementById("uav").src=u.photoURL||"";
       document.getElementById("unm").textContent=u.displayName||u.email;
+      // 로그인한 유저를 users/ 에 등록
+      db.ref("users/"+ekey).set({
+        email:u.email,
+        name:u.displayName||u.email,
+        photoURL:u.photoURL||"",
+        lastLogin:Date.now()
+      });
       // 산수연 데이터 마이그레이션
       migrateSansooyeon();
       // 초대 토큰 처리
@@ -657,27 +670,33 @@ function renMb(){
         +(m.photoURL?"<img class='mav' src='"+esc(m.photoURL)+"'>":"<div class='mavp'>"+esc(init)+"</div>")
         +"<div class='mi'><div class='mn'>"+esc(m.name||email)+(isMe?" <span style='font-size:10px;color:#aaa'>(나)</span>":"")+"</div><div class='me'>"+esc(email)+"</div></div>"
         +(isMe?"<span class='rb rb-"+m.role+"'>"+RKO[m.role]+"</span>"
-          :"<select class='rs' onchange='chRole(\""+k+"\",this.value)'>"
-            +["admin","editor","viewer"].map(function(r){return"<option value='"+r+"\'"+(m.role===r?" selected":"")+">"+RKO[r]+"</option>";}).join("")
+          :"<select class='rs' onchange='chRole(""+k+"",this.value)'>"
+            +["admin","editor","viewer"].map(function(r){return"<option value='"+r+"'"+(m.role===r?" selected":"")+">"+RKO[r]+"</option>";}).join("")
           +"</select>"
-          +"<button class='rmb' onclick='rmMb(\""+k+"\")'>✕</button>")
+          +"<button class='rmb' onclick='rmMb(""+k+"")'>✕</button>")
         +"</div>";
     }).join("");
     db.ref("projects/"+pid+"/invites").once("value",function(is){
       var ivs=is.val()||{};
-      var pr=Object.keys(ivs).map(function(k){return"<div class='pnd'><span>⏳ "+esc(ke(k))+"</span><button class='pndc' onclick='canInv(\""+k+"\")'>취소</button></div>";}).join("");
+      var pr=Object.keys(ivs).map(function(k){return"<div class='pnd'><span>⏳ "+esc(ke(k))+"</span><button class='pndc' onclick='canInv(""+k+"")'>취소</button></div>";}).join("");
+      var mKeyStr=Object.keys(ms).join(",");
       document.getElementById("mbc").innerHTML=
-        "<div class='mc'><div class='mh'>👥 멤버 ("+Object.keys(ms).length+")</div>"+rows+(pr?"<div style='padding:8px 0 4px 15px;font-size:11px;color:#aaa'>초대 대기</div>"+pr:"")+"</div>"
+        "<div class='mc'><div class='mh'>👥 현재 멤버 ("+Object.keys(ms).length+"명)</div>"+rows+(pr?"<div style='padding:8px 0 4px 15px;font-size:11px;color:#aaa'>초대 대기 중</div>"+pr:"")+"</div>"
+        +"<div class='mc'><div class='mh'>👤 앱 사용자에서 추가</div>"
+        +"<div class='iw'>"
+        +"<input class='ii' id='usr-search' placeholder='이름 또는 이메일로 검색' oninput='searchUsers(this.value,\'"+mKeyStr+"\')' onfocus='searchUsers(this.value,\'"+mKeyStr+"\')' autocomplete='off'>"
+        +"<div id='usr-list'></div>"
+        +"</div></div>"
         +"<div class='mc'><div class='mh'>🔗 초대 링크 생성</div>"
         +"<div class='iw'>"
         +"<div class='rr'>"
         +"<label><input type='radio' name='lnkr' value='editor' checked> "+RKO["editor"]+"</label>"
         +"<label><input type='radio' name='lnkr' value='viewer'> "+RKO["viewer"]+"</label>"
         +"</div>"
-        +"<button class='lnkb' onclick='genInvLink(document.querySelector(\"input[name=lnkr]:checked\").value)'>🔗 초대 링크 만들기</button>"
+        +"<button class='lnkb' onclick='genInvLink(document.querySelector("input[name=lnkr]:checked").value)'>🔗 초대 링크 만들기</button>"
         +lnkBox
         +"</div></div>"
-        +"<div class='mc'><div class='mh'>📧 이메일로 초대</div>"
+        +"<div class='mc'><div class='mh'>📧 이메일로 직접 초대</div>"
         +"<div class='iw'>"
         +"<input class='ii' id='iie' type='email' placeholder='초대할 이메일 주소'/>"
         +"<div class='rr'>"
@@ -686,9 +705,60 @@ function renMb(){
         +"</div>"
         +"<button class='invb' onclick='invMb()'>이메일 초대</button>"
         +"</div></div>";
+      searchUsers("",mKeyStr);
     });
   });
 }
+
+function searchUsers(q,memberKeys){
+  db.ref("users").once("value",function(snap){
+    var all=snap.val()||{};
+    var mks=(memberKeys||"").split(",").filter(Boolean);
+    var q2=(q||"").toLowerCase().trim();
+    var filtered=Object.keys(all).filter(function(k){
+      if(k===ekey)return false;
+      if(mks.indexOf(k)>=0)return false;
+      if(!q2)return true;
+      var u2=all[k];
+      return (u2.name||"").toLowerCase().indexOf(q2)>=0||(u2.email||"").toLowerCase().indexOf(q2)>=0;
+    });
+    var el=document.getElementById("usr-list");
+    if(!el)return;
+    if(!Object.keys(all).length){
+      el.innerHTML="<div class='uempty'>아직 앱에 로그인한 다른 사용자가 없어요</div>";return;
+    }
+    if(!filtered.length){
+      el.innerHTML="<div class='uempty'>"+(q2?"'"+esc(q2)+"' 검색 결과 없음":"모든 사용자가 이미 멤버예요")+"</div>";return;
+    }
+    el.innerHTML=filtered.slice(0,20).map(function(k){
+      var u2=all[k];var init=(u2.name||u2.email||"?").charAt(0).toUpperCase();
+      return"<div class='usr-row' id='urow_"+k+"'>"
+        +(u2.photoURL?"<img class='mav' src='"+esc(u2.photoURL)+"'>":"<div class='mavp' style='font-size:11px'>"+esc(init)+"</div>")
+        +"<div class='mi'><div class='mn'>"+esc(u2.name||u2.email)+"</div><div class='me'>"+esc(u2.email)+"</div></div>"
+        +"<select class='rs' id='usr-role-"+k+"' style='margin-right:4px'>"
+        +["admin","editor","viewer"].map(function(r){return"<option value='"+r+"'"+(r==="editor"?" selected":"")+">"+RKO[r]+"</option>";}).join("")
+        +"</select>"
+        +"<button class='add-mb-btn' onclick='addUserToProj(""+k+"",""+esc(u2.email)+"",""+esc(u2.name||u2.email)+"",""+esc(u2.photoURL||"")+"")'>추가</button>"
+        +"</div>";
+    }).join("");
+  });
+}
+
+function addUserToProj(uk,email,name,photoURL){
+  var roleEl=document.getElementById("usr-role-"+uk);
+  var role=roleEl?roleEl.value:"viewer";
+  db.ref("projects/"+pid+"/members/"+uk).set({
+    email:email,name:name,photoURL:photoURL,role:role
+  },function(err){
+    if(!err){
+      showToast(name+" 추가됨 ("+RKO[role]+") ✓");
+      var row=document.getElementById("urow_"+uk);
+      if(row){row.style.opacity="0.35";row.style.pointerEvents="none";row.querySelector(".add-mb-btn").textContent="✓ 추가됨";}
+      setTimeout(renMb,900);
+    }
+  });
+}
+
 
 function chRole(k,r){db.ref("projects/"+pid+"/members/"+k+"/role").set(r);showToast("권한 변경됨 ✓");}
 function rmMb(k){if(!confirm("멤버를 제거할까요?"))return;db.ref("projects/"+pid+"/members/"+k).remove();showToast("멤버 제거됨");setTimeout(renMb,400);}
