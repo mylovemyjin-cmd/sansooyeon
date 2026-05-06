@@ -169,6 +169,21 @@ body.edit .add-sec-btn { display: block; }
 .google-btn:hover { border-color: #C8860A; box-shadow: 0 4px 16px rgba(200,134,10,0.2); }
 .google-btn img { width: 20px; height: 20px; }
 .login-note { font-size: 11px; color: #ccc; margin-top: 16px; }
+.inapp-box { text-align: center; }
+.inapp-msg { font-size: 13px; color: #666; line-height: 1.7; margin-bottom: 22px; }
+.open-browser-btn {
+  width: 100%; padding: 13px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #8B1A1A, #C8860A);
+  color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+  font-family: inherit; margin-bottom: 16px;
+}
+.inapp-manual { font-size: 11px; color: #aaa; line-height: 1.8; }
+.inapp-url {
+  display: inline-block; margin-top: 6px; padding: 6px 12px;
+  background: #f5f5f5; border-radius: 8px; font-size: 12px;
+  color: #555; cursor: pointer; font-weight: 600; border: 1px solid #e0e0e0;
+}
+.copy-toast { font-size: 12px; color: #556B2F; margin-top: 8px; font-weight: 600; }
 /* User bar */
 #user-bar {
   display: none; background: rgba(255,255,255,0.12);
@@ -192,15 +207,25 @@ body.edit .add-sec-btn { display: block; }
 
 <!-- Login Screen -->
 <div id="login-screen">
-  <div class="login-box">
+  <div class="login-box" id="login-box">
     <div class="login-emoji">🎊</div>
     <div class="login-title">팔순 산수연</div>
     <div class="login-sub">가족 준비 체크리스트</div>
-    <button class="google-btn" onclick="signInGoogle()">
+    <button class="google-btn" id="google-login-btn" onclick="signInGoogle()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google"/>
       Google 계정으로 시작하기
     </button>
     <div class="login-note">가족 구성원만 접근 가능합니다</div>
+  </div>
+  <!-- 인앱 브라우저 안내 박스 (기본 숨김) -->
+  <div class="inapp-box" id="inapp-box" style="display:none">
+    <div class="login-emoji">⚠️</div>
+    <div class="login-title" style="color:#8B4513">외부 브라우저 필요</div>
+    <div class="inapp-msg">카카오톡에서는 Google 로그인이 차단됩니다.<br>아래 버튼을 눌러 브라우저에서 열어주세요.</div>
+    <button class="open-browser-btn" onclick="openInBrowser()">🌐 Chrome/Safari로 열기</button>
+    <div class="inapp-manual">또는 주소를 직접 복사해서 브라우저에 붙여넣으세요.<br>
+    <span class="inapp-url" onclick="copyUrl()">comfy-smakager-2a9931.netlify.app</span></div>
+    <div class="copy-toast" id="copy-toast" style="display:none">✓ 주소가 복사됐어요!</div>
   </div>
 </div>
 
@@ -395,19 +420,45 @@ if(firebaseConfig.apiKey !== "YOUR_API_KEY"){
   try{ notesVal=localStorage.getItem(LS_NOTES)||""; }catch(e){}
 }
 
-function signInGoogle(){
-  var provider = new firebase.auth.GoogleAuthProvider();
-  // 카카오톡 등 인앱 브라우저 감지 시 redirect 방식 사용
+function isInAppBrowser(){
   var ua = navigator.userAgent.toLowerCase();
-  var isInApp = /kakaotalk|instagram|fban|fbav|naver|line|wechat|micromessenger/.test(ua);
-  if(isInApp){
-    auth.signInWithRedirect(provider).catch(function(e){ alert("로그인 실패: "+e.message); });
+  return /kakaotalk|instagram|fban|fbav|naver|line|wechat|micromessenger|everytimeapp|twitter/.test(ua);
+}
+function showInAppGuide(){
+  document.getElementById("login-box").style.display = "none";
+  document.getElementById("inapp-box").style.display = "block";
+}
+function openInBrowser(){
+  var url = "https://comfy-smakager-2a9931.netlify.app";
+  // intent scheme for Android
+  var ua = navigator.userAgent.toLowerCase();
+  if(/android/.test(ua)){
+    location.href = "intent://" + url.replace("https://","") + "#Intent;scheme=https;package=com.android.chrome;end";
   } else {
-    auth.signInWithPopup(provider).catch(function(e){
-      // 팝업 실패 시 redirect로 폴백
-      auth.signInWithRedirect(provider).catch(function(e2){ alert("로그인 실패: "+e2.message); });
-    });
+    location.href = url;
   }
+}
+function copyUrl(){
+  var url = "https://comfy-smakager-2a9931.netlify.app";
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(function(){
+      document.getElementById("copy-toast").style.display="block";
+      setTimeout(function(){ document.getElementById("copy-toast").style.display="none"; }, 2000);
+    });
+  } else {
+    var ta = document.createElement("textarea");
+    ta.value = url; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    document.getElementById("copy-toast").style.display="block";
+    setTimeout(function(){ document.getElementById("copy-toast").style.display="none"; }, 2000);
+  }
+}
+function signInGoogle(){
+  if(isInAppBrowser()){ showInAppGuide(); return; }
+  var provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(function(e){
+    auth.signInWithRedirect(provider).catch(function(e2){ alert("로그인 실패: "+e2.message); });
+  });
 }
 function signOut(){
   auth.signOut();
@@ -639,6 +690,11 @@ function showToast(msg){
 
 // Init
 render();
+// 인앱 브라우저면 바로 안내 표시
+if(isInAppBrowser()){
+  document.getElementById("login-screen").style.display = "flex";
+  showInAppGuide();
+}
 </script>
 </body>
 </html>
