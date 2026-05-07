@@ -95,7 +95,7 @@ body.em .seb{display:flex;}
 body.em .addr{display:flex!important;}
 body.em .asb{display:block!important;}
 body.em .ibtns{display:flex!important;}
-body.em .date-row{display:flex!important;}
+.date-row{display:flex;}
 .ir{display:flex;align-items:flex-start;padding:9px 13px;gap:9px;border-bottom:1px solid #f5e8d0;}
 .ir:last-of-type{border-bottom:none;}
 .chk{width:21px;height:21px;min-width:21px;border-radius:5px;border:2px solid #ccc;background:#fff;display:flex;align-items:center;justify-content:center;margin-top:2px;flex-shrink:0;}
@@ -120,6 +120,7 @@ body.em .date-row{display:flex!important;}
 .date-lbl{font-size:9px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.5px;}
 .date-inp{font-size:11px;border:1.5px solid var(--br);border-radius:7px;padding:4px 7px;background:#fff;outline:none;color:#444;width:100%;}
 .date-inp:focus{border-color:var(--ac);}
+.date-field.comp-auto{opacity:.7;}
 .mr{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;}
 .ai{font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;width:74px;padding:1px 2px;color:#bbb;}
 .ai.has{font-weight:600;color:#444;}
@@ -636,13 +637,15 @@ function renderSecs(){
       if(it.compDate){badges+="<span class='dbadge comp'>✅ 완료 "+fmtDate(it.compDate)+"</span>";}
       var badgeRow=badges?"<div class='date-badges'>"+badges+"</div>":"";
       // 날짜 입력 행
+      var compDisp=it.compDate?"<span style='font-size:11px;color:#276749;font-weight:600'>"+it.compDate+"</span>":"<span style='font-size:11px;color:#ccc'>체크 시 자동 입력</span>";
       var dateRow="<div class='date-row'>"
         +"<div class='date-field'><div class='date-lbl'>📅 Due Date</div>"
         +"<input type='date' class='date-inp' data-sid='"+sid+"' data-iid='"+iid+"' data-type='due' value='"+(it.dueDate||"")+"' onchange='setDate(this)'"+(canEd()?"":" disabled")+" title='마감일'></div>"
-        +"<div class='date-field'><div class='date-lbl'>🎯 Target</div>"
+        +"<div class='date-field'><div class='date-lbl'>🎯 Target Date</div>"
         +"<input type='date' class='date-inp' data-sid='"+sid+"' data-iid='"+iid+"' data-type='target' value='"+(it.targetDate||"")+"' onchange='setDate(this)'"+(canEd()?"":" disabled")+" title='목표일'></div>"
-        +"<div class='date-field'><div class='date-lbl'>✅ Completed</div>"
-        +"<input type='date' class='date-inp' data-sid='"+sid+"' data-iid='"+iid+"' data-type='comp' value='"+(it.compDate||"")+"' onchange='setDate(this)'"+(canEd()?"":" disabled")+" title='완료일'></div>"
+        +"<div class='date-field comp-auto'><div class='date-lbl'>✅ Completed</div>"
+        +compDisp
+        +"</div>"
         +"</div>";
       return "<div class='ir'>"
         +"<div class='"+chkCl+"' style='"+chkSt+"' onclick='"+(canEd()?"togIt(\""+sid+"\",\""+iid+"\")":" ")+"'>"
